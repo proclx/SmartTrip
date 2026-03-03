@@ -1,4 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using SmartTrip.Data;
+using SmartTrip.Models;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<SmartTripDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddIdentityApiEndpoints<User>()
+    .AddEntityFrameworkStores<SmartTripDbContext>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
