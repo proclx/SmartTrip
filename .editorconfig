@@ -1,0 +1,13 @@
+root = true
+
+[*.cs]
+# Базовий стиль: 4 пробіли
+indent_style = space
+indent_size = 4
+
+# Вимикаємо обов'язкові заголовки/копірайти (SA1633)
+dotnet_diagnostic.SA1633.severity = none
+# Вимикаємо вимогу using всередині namespace (SA1200)
+dotnet_diagnostic.SA1200.severity = none
+# Робимо підказки Roslynator менш агресивними
+dotnet_diagnostic.RCS1018.severity = suggestion
