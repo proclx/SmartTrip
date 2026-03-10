@@ -1,0 +1,21 @@
+root = true
+
+[*.cs]
+# Базові налаштування C#
+indent_style = space
+indent_size = 4
+newline_heading = lf
+charset = utf-8
+
+# Налаштування рівнів помилок
+# SA1633: Вимагає копірайт у кожному файлі (часто заважає, вимикаємо)
+dotnet_diagnostic.SA1633.severity = none
+
+# SA1200: Using-директиви мають бути всередині namespace (вимикаємо)
+dotnet_diagnostic.SA1200.severity = none
+
+# Roslynator: підказувати спрощення коду
+dotnet_diagnostic.RCS1018.severity = suggestion
+
+# Sonar: виявляти потенційні баги (наприклад, порожні catch-блоки)
+dotnet_diagnostic.S108.severity = warning
