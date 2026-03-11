@@ -3,12 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip", "SmartTrip.csproj", "{0CA7C4E7-D351-4847-818A-881EDE3D4ECD}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Domain", "SmartTrip.Domain\SmartTrip.Domain.csproj", "{ABB24AEE-3345-4399-9D89-5E4C88A2637B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Application", "SmartTrip.Application\SmartTrip.Application.csproj", "{C9BD22CB-2C32-454E-BF99-E26F4AFA2B85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Infrastructure", "SmartTrip.Infrastructure\SmartTrip.Infrastructure.csproj", "{2B2DDC77-0AA3-48B7-AC47-72F625ADEF26}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.Tests", "SmartTrip.Tests\SmartTrip.Tests.csproj", "{3D4E5F6A-7B8C-4A1D-9E2F-5A6B7C8D9E0F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartTrip.UI", "SmartTrip.UI\SmartTrip.UI.csproj", "{4E5F6A7B-8C9D-4E2F-1A3B-5C6D7E8F9A0B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -16,10 +24,26 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{0CA7C4E7-D351-4847-818A-881EDE3D4ECD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0CA7C4E7-D351-4847-818A-881EDE3D4ECD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0CA7C4E7-D351-4847-818A-881EDE3D4ECD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0CA7C4E7-D351-4847-818A-881EDE3D4ECD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABB24AEE-3345-4399-9D89-5E4C88A2637B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABB24AEE-3345-4399-9D89-5E4C88A2637B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABB24AEE-3345-4399-9D89-5E4C88A2637B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABB24AEE-3345-4399-9D89-5E4C88A2637B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9BD22CB-2C32-454E-BF99-E26F4AFA2B85}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9BD22CB-2C32-454E-BF99-E26F4AFA2B85}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9BD22CB-2C32-454E-BF99-E26F4AFA2B85}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9BD22CB-2C32-454E-BF99-E26F4AFA2B85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2B2DDC77-0AA3-48B7-AC47-72F625ADEF26}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2B2DDC77-0AA3-48B7-AC47-72F625ADEF26}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2B2DDC77-0AA3-48B7-AC47-72F625ADEF26}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2B2DDC77-0AA3-48B7-AC47-72F625ADEF26}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D4E5F6A-7B8C-4A1D-9E2F-5A6B7C8D9E0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D4E5F6A-7B8C-4A1D-9E2F-5A6B7C8D9E0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D4E5F6A-7B8C-4A1D-9E2F-5A6B7C8D9E0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D4E5F6A-7B8C-4A1D-9E2F-5A6B7C8D9E0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E5F6A7B-8C9D-4E2F-1A3B-5C6D7E8F9A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E5F6A7B-8C9D-4E2F-1A3B-5C6D7E8F9A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E5F6A7B-8C9D-4E2F-1A3B-5C6D7E8F9A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E5F6A7B-8C9D-4E2F-1A3B-5C6D7E8F9A0B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -28,3 +52,4 @@ Global
 		SolutionGuid = {B46D4DFB-0D0D-4855-904F-113049A5AE60}
 	EndGlobalSection
 EndGlobal
+
