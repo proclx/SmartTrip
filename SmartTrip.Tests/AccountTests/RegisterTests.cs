@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Http;
 using Moq;
 using SmartTrip.Application.Services;
 using SmartTrip.Models;
@@ -15,6 +16,13 @@ namespace SmartTrip.Tests.AccountTests
             return new Mock<UserManager<User>>(store.Object, null, null, null, null, null, null, null, null);
         }
 
+        private Mock<SignInManager<User>> MockSignInManager(UserManager<User> userManager)
+        {
+            var contextAccessor = new Mock<IHttpContextAccessor>();
+            var claimsFactory = new Mock<IUserClaimsPrincipalFactory<User>>();
+            return new Mock<SignInManager<User>>(userManager, contextAccessor.Object, claimsFactory.Object, null, null, null, null);
+        }
+
         [Fact]
         public async Task RegisterAsync_WhenSuccessful_ShouldReturnSuccess()
         { 
@@ -25,7 +33,9 @@ namespace SmartTrip.Tests.AccountTests
                 .Setup(u => u.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
                 .ReturnsAsync(IdentityResult.Success);
 
-            var authService = new AuthService(userManagerMock.Object);
+            var signInManagerMock = MockSignInManager(userManagerMock.Object);
+
+            var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object);
 
             var result = await authService.RegisterAsync("test@gmail.com", "Password123!", "Тарас", "Шевченко");
 
@@ -36,24 +46,25 @@ namespace SmartTrip.Tests.AccountTests
         }
 
         [Fact]
-        public async Task RegisterAsync_WhenFailed_ShouldReturnErrors()
+        public async Task RegisterAsync_WhenFails_ShouldReturnErrors()
         {
             var userManagerMock = MockUserManager();
-            var expectedError = new IdentityError { Description = "Email already exists" };
 
-            // Налаштовуємо мок: коли викликається CreateAsync, імітуємо помилку БД
+            var error = new IdentityError { Description = "Password too short" };
             userManagerMock
                 .Setup(u => u.CreateAsync(It.IsAny<User>(), It.IsAny<string>()))
-                .ReturnsAsync(IdentityResult.Failed(expectedError));
+                .ReturnsAsync(IdentityResult.Failed(error));
 
-            var authService = new AuthService(userManagerMock.Object);
+            var signInManagerMock = MockSignInManager(userManagerMock.Object);
 
-            var result = await authService.RegisterAsync("test@gmail.com", "Password123!", "Тарас", "Шевченко");
+            var authService = new AuthService(userManagerMock.Object, signInManagerMock.Object);
+
+            var result = await authService.RegisterAsync("test@gmail.com", "123", "Тарас", "Шевченко");
 
             Assert.False(result.Succeeded); // Перевіряємо, що результат неуспішний
 
             // Перевіряємо, що повернулася правильна помилка
-            Assert.Contains(result.Errors, e => e.Description == "Email already exists");
+            Assert.Contains(result.Errors, e => e.Description == "Password too short");
         }
     }
     

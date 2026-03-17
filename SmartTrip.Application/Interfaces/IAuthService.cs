@@ -11,5 +11,7 @@ namespace SmartTrip.Application.Interfaces
     public interface IAuthService
     {
         Task<IdentityResult> RegisterAsync(string email, string password, string firstName, string lastName);
+        Task<SignInResult> LoginAsync(string email, string password, bool rememberMe);
+        Task LogoutAsync();
     }
 }

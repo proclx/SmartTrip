@@ -30,7 +30,7 @@ namespace SmartTrip.UI.Controllers
             var result = await authService.RegisterAsync(model.Email, model.Password, model.FirstName, model.LastName);
             if (result.Succeeded)
             {
-                RedirectToAction("Index", "Home");
+                return RedirectToAction("Index", "Home");
             }
 
             foreach (var error in result.Errors)
@@ -39,6 +39,37 @@ namespace SmartTrip.UI.Controllers
             }
 
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Login(LoginViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var result = await authService.LoginAsync(model.Email, model.Password, model.RememberMe);
+            if (result.Succeeded)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Logout()
+        {
+            await authService.LogoutAsync();
+            return RedirectToAction("Index", "Home");
         }
 
         public IActionResult Index()
