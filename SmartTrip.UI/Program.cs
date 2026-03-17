@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SmartTrip.Data;
 using SmartTrip.Models;
+using SmartTrip.Application.Interfaces;
+using SmartTrip.Application.Services;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -27,6 +29,7 @@ try
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
+    builder.Services.AddScoped<IAuthService, AuthService>();
 
     var app = builder.Build();
 
@@ -52,6 +55,7 @@ try
 
     app.UseRouting();
 
+    app.UseAuthentication();
     app.UseAuthorization();
 
     app.MapControllerRoute(
