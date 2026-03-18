@@ -44,5 +44,27 @@ namespace SmartTrip.Application.Services
         {
             await _signInManager.SignOutAsync();
         }
+
+        public async Task<string?> GeneratePasswordResetTokenAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return null;
+            }
+
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(string email, string token, string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Користувача не знайдено." });
+            }
+
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
+        }
     }
 }

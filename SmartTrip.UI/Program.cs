@@ -4,6 +4,7 @@ using SmartTrip.Data;
 using SmartTrip.Models;
 using SmartTrip.Application.Interfaces;
 using SmartTrip.Application.Services;
+using Microsoft.AspNetCore.Identity;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -25,11 +26,15 @@ try
         options.UseNpgsql(connectionString));
 
     builder.Services.AddIdentityApiEndpoints<User>()
-        .AddEntityFrameworkStores<SmartTripDbContext>();
+        .AddEntityFrameworkStores<SmartTripDbContext>()
+        .AddDefaultTokenProviders();
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
     builder.Services.AddScoped<IAuthService, AuthService>();
+
+    //email sender
+    builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
 
     var app = builder.Build();
 
@@ -37,7 +42,7 @@ try
     if (!app.Environment.IsDevelopment())
     {
         app.UseExceptionHandler("/Home/Error");
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+        // The default HSTS value is 30 days. You may want to want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
         app.UseHsts();
     }
 

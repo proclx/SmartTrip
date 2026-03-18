@@ -7,6 +7,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <UserSecretsId>8f76def5-e8f7-44cf-bea6-32e78d6acf1a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
