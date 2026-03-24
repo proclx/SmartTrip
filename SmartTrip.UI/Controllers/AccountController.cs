@@ -35,7 +35,7 @@ namespace SmartTrip.UI.Controllers
             if (result.Succeeded)
             {
                 Log.Information("User {Email} registered successfully", model.Email);
-                return RedirectToAction("Index", "Home");
+                return RedirectToAction("Login");
             }
 
             foreach (var error in result.Errors)
