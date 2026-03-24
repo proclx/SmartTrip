@@ -34,6 +34,9 @@ try
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ITripService, TripService>();
 
+    //gallery
+    builder.Services.AddScoped<IGalleryService, GalleryService>();
+
     //email sender
     builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
 

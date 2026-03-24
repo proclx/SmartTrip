@@ -25,5 +25,6 @@ namespace SmartTrip.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public List<TripDay> TripDays { get; set; } = new();
+        public List<Photo> Photos { get; set; } = new();
     }
 }

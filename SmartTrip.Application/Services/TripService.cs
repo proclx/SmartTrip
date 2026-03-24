@@ -50,5 +50,14 @@ namespace SmartTrip.Application.Services
 
             return trip.Id;
         }
+
+        public async Task<IEnumerable<Trip>> GetUserTripsAsync(string userId)
+        {
+            return await _context.Trips
+                .Include(t => t.City) // підтягуємо дані про місто
+                .Where(t => t.UserId == userId)
+                .OrderByDescending(t => t.StartDate) // cвіжі подорожі зверху
+                .ToListAsync();
+        }
     }
 }

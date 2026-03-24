@@ -1,0 +1,96 @@
+﻿@using SmartTrip.Models
+@model IEnumerable<Photo>
+
+@{
+    ViewData["Title"] = "Моя Галерея";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📸 Моя Галерея</h2>
+        <a asp-action="Upload" class="btn btn-success shadow-sm">
+            <i class="bi bi-plus-circle"></i> Додати фото
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info text-center shadow-sm" role="alert">
+            У вас поки немає завантажених фото. Час додати перші спогади!
+        </div>
+    }
+    else
+    {
+        @* Групуємо фото за TripId для створення секцій *@
+        var groupedPhotos = Model.GroupBy(p => p.TripId);
+
+        foreach (var group in groupedPhotos)
+        {
+            @* Отримуємо дані про подорож з першого фото в групі *@
+            var firstPhoto = group.FirstOrDefault();
+            if (firstPhoto == null) continue;
+
+            var tripName = firstPhoto.Trip?.City?.Name ?? "Подорож";
+            var startDate = firstPhoto.Trip?.StartDate.ToShortDateString() ?? "";
+            var endDate = firstPhoto.Trip?.EndDate.ToShortDateString() ?? "";
+
+            <div class="trip-section mb-5 p-3 border rounded bg-light shadow-sm">
+                <div class="d-flex align-items-center mb-3 border-bottom pb-2">
+                    <h4 class="mb-0 text-primary">📍 @tripName</h4>
+                    <span class="badge bg-white text-dark ms-3 border">@startDate - @endDate</span>
+                    <span class="ms-auto text-muted small">@group.Count() фото</span>
+                </div>
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    @foreach (var photo in group)
+                    {
+                        <div class="col">
+                            <div class="card h-100 border-0 shadow-sm gallery-card">
+                                @* Посилання для Lightbox. data-gallery дозволяє гортати фото лише цієї подорожі *@
+                                <a href="@photo.FilePath" class="glightbox" data-gallery="gallery-@firstPhoto.TripId">
+                                    <img src="@photo.FilePath" class="card-img-top rounded shadow-sm" alt="Trip Photo"
+                                         style="height: 180px; object-fit: cover; transition: transform .3s;">
+                                </a>
+
+                                <div class="card-body p-2 d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">@photo.UploadDate.ToString("dd.MM HH:mm")</small>
+
+                                    <form asp-action="Delete" asp-route-id="@photo.Id" method="post"
+                                          onsubmit="return confirm('Ви впевнені, що хочете видалити це фото?');" class="m-0">
+                                        <button type="submit" class="btn btn-link text-danger p-0 border-0" title="Видалити">
+                                            <i class="bi bi-trash"></i> Видалити
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@* Додаткові стилі для ефектів *@
+<style>
+    .gallery-card img:hover {
+        transform: scale(1.03);
+        cursor: pointer;
+    }
+
+    .trip-section {
+        background-color: #f8f9fa !important;
+    }
+</style>
+
+@section Scripts {
+    <script type="text/javascript">
+        // Ініціалізація Lightbox
+        const lightbox = GLightbox({
+            selector: '.glightbox',
+            touchNavigation: true,
+            loop: true,
+            zoomable: true
+        });
+    </script>
+}

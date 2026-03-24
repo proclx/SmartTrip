@@ -1,0 +1,40 @@
+﻿@model SmartTrip.UI.ViewModels.UploadPhotoViewModel
+
+@{
+    ViewData["Title"] = "Завантажити фото";
+}
+
+<div class="container mt-4">
+    <h2>Додати фото до подорожі</h2>
+    <hr />
+
+    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="mb-3">
+            <label asp-for="SelectedTripId" class="form-label"></label>
+            <select asp-for="SelectedTripId" class="form-select" asp-items="Model.Trips">
+                <option value="">-- Оберіть подорож --</option>
+            </select>
+            <span asp-validation-for="SelectedTripId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Files" class="form-label"></label>
+            <input asp-for="Files" type="file" class="form-control" multiple accept="image/*" />
+            <small class="text-muted">Можна обрати декілька файлів одночасно.</small>
+            <span asp-validation-for="Files" class="text-danger"></span>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Завантажити</button>
+            <a asp-action="Index" class="btn btn-secondary">Назад до галереї</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartTrip.Data;
@@ -11,9 +12,11 @@ using SmartTrip.Data;
 namespace SmartTrip.Migrations
 {
     [DbContext(typeof(SmartTripDbContext))]
-    partial class SmartTripDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260324211643_AddGalleryFeature")]
+    partial class AddGalleryFeature
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
