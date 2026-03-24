@@ -1,0 +1,46 @@
+@model IEnumerable<SmartTrip.UI.ViewModels.TripViewModel>
+
+@{
+    ViewData["Title"] = "Улюблені подорожі";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Улюблені подорожі</h2>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary" asp-action="Index">Всі подорожі</a>
+            <a class="btn btn-primary" asp-action="Create">Додати нову подорож</a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Тут будуть ваші улюблені подорожі. Додайте сердечко у подорожі, щоб вони з'явились тут.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            @foreach (var trip in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">@trip.City</h5>
+                                <span class="text-danger" title="Улюблена">
+                                    <i class="fas fa-heart"></i>
+                                </span>
+                            </div>
+                            <p class="card-text mb-1"><strong>Період:</strong> @trip.StartDate.ToString("dd.MM.yyyy") - @trip.EndDate.ToString("dd.MM.yyyy")</p>
+                            <p class="card-text mb-1"><strong>Людей:</strong> @trip.PeopleCount</p>
+                            <p class="card-text mb-1"><strong>Фото:</strong> @(trip.PhotoCount > 0 ? trip.PhotoCount.ToString() : "не додано")</p>
+
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@trip.Id">Редагувати</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

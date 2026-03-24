@@ -24,6 +24,12 @@ namespace SmartTrip.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        public int PeopleCount { get; set; } = 1;
+
+        public int? Rating { get; set; }
+
+        public bool IsFavorite { get; set; } = false;
+
         public List<TripDay> TripDays { get; set; } = new();
         public List<Photo> Photos { get; set; } = new();
     }

@@ -11,5 +11,17 @@ namespace SmartTrip.Application.Interfaces
 
         // метод для отримання списку подорожей користувача
         Task<IEnumerable<Trip>> GetUserTripsAsync(string userId);
+
+        // метод для отримання улюблених подорожей користувача
+        Task<IEnumerable<Trip>> GetFavoriteTripsAsync(string userId);
+
+        // метод для отримання детальної інформації по подорожі
+        Task<Trip?> GetTripByIdAsync(int tripId, string userId);
+
+        // оновлення додаткових даних (кількість людей, рейтинг)
+        Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating);
+
+        // переключити статус улюбленої подорожі
+        Task<bool> ToggleFavoriteAsync(int tripId, string userId);
     }
 }

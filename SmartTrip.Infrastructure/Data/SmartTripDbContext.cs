@@ -26,14 +26,14 @@ namespace SmartTrip.Data
             // Налаштування зв'язку: якщо видаляємо подорож — видаляються і записи про фото в БД
             builder.Entity<Photo>()
                 .HasOne(p => p.Trip)
-                .WithMany() // Якщо в Trip.cs немає List<Photo>, залишаємо порожнім
+                .WithMany(t => t.Photos)
                 .HasForeignKey(p => p.TripId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Налаштування зв'язку з користувачем
             builder.Entity<Photo>()
                 .HasOne(p => p.User)
-                .WithMany()
+                .WithMany(u => u.Photos)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.NoAction); // Не видаляємо юзера, якщо видалено фото
         }

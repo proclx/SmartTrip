@@ -54,10 +54,53 @@ namespace SmartTrip.Application.Services
         public async Task<IEnumerable<Trip>> GetUserTripsAsync(string userId)
         {
             return await _context.Trips
-                .Include(t => t.City) // підтягуємо дані про місто
+                .Include(t => t.City)
+                .Include(t => t.Photos)
                 .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.StartDate) // cвіжі подорожі зверху
+                .OrderByDescending(t => t.StartDate)
                 .ToListAsync();
+        }
+
+        public async Task<IEnumerable<Trip>> GetFavoriteTripsAsync(string userId)
+        {
+            return await _context.Trips
+                .Include(t => t.City)
+                .Include(t => t.Photos)
+                .Where(t => t.UserId == userId && t.IsFavorite)
+                .OrderByDescending(t => t.StartDate)
+                .ToListAsync();
+        }
+
+        public async Task<Trip?> GetTripByIdAsync(int tripId, string userId)
+        {
+            return await _context.Trips
+                .Include(t => t.City)
+                .Include(t => t.Photos)
+                .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+        }
+
+        public async Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating)
+        {
+            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+            if (trip == null)
+                return false;
+
+            trip.PeopleCount = peopleCount;
+            trip.Rating = rating;
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> ToggleFavoriteAsync(int tripId, string userId)
+        {
+            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+            if (trip == null)
+                return false;
+
+            trip.IsFavorite = !trip.IsFavorite;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

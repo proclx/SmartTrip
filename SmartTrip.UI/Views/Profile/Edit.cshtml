@@ -1,0 +1,128 @@
+@model SmartTrip.UI.ViewModels.EditProfileViewModel
+
+@{
+    ViewData["Title"] = "Редагування профіля";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-lg">
+                <div class="card-body p-5">
+                    <h2 class="mb-4">Редагувати профіль</h2>
+
+                    <form method="post" asp-action="Edit" asp-controller="Profile" enctype="multipart/form-data" id="editForm">
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <div class="profile-image-preview">
+                                    @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                                    {
+                                        <img id="preview" src="@Model.ProfileImageUrl" alt="Фото профіля" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #007bff;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" id="preview-placeholder" style="width: 150px; height: 150px; margin: 0 auto; border: 3px solid #ccc;">
+                                            <i class="fas fa-user" style="font-size: 60px; color: #999;"></i>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                                <div class="mb-3">
+                                    <label asp-for="ImageFile" class="form-label">Завантажити фото профіля</label>
+                                    <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" id="imageInput" />
+                                    <small class="text-muted d-block mt-2">Допустимі формати: JPG, JPEG, PNG, GIF (максимум 5MB)</small>
+                                    <span asp-validation-for="ImageFile" class="text-danger form-text"></span>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger" id="deleteImageBtn" onclick="deleteProfileImage()">
+                                        <i class="fas fa-trash"></i> Видалити поточне фото
+                                    </button>
+                                }
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+                        <div class="mb-3">
+                            <label asp-for="FirstName" class="form-label">Ім'я</label>
+                            <input asp-for="FirstName" class="form-control" placeholder="Тарас" />
+                            <span asp-validation-for="FirstName" class="text-danger form-text"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="LastName" class="form-label">Прізвище</label>
+                            <input asp-for="LastName" class="form-control" placeholder="Шевченко" />
+                            <span asp-validation-for="LastName" class="text-danger form-text"></span>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Email" class="form-label">Електронна пошта</label>
+                            <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                            <span asp-validation-for="Email" class="text-danger form-text"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Зберегти зміни
+                            </button>
+                            <a asp-action="Index" asp-controller="Profile" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Скасувати
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Прихована форма для видалення фото -->
+<form method="post" asp-action="DeleteImage" asp-controller="Profile" id="deleteImageForm" style="display: none;"></form>
+
+<style>
+    .profile-image-preview {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        text-align: center;
+    }
+</style>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Попередній перегляд зображення
+        document.getElementById('imageInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('preview');
+                    if (preview) {
+                        preview.src = event.target.result;
+                    } else {
+                        const placeholder = document.getElementById('preview-placeholder');
+                        if (placeholder) {
+                            placeholder.innerHTML = '<img src="' + event.target.result + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
+                        }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Видалення фото профіля
+        function deleteProfileImage() {
+            if (confirm('Ви впевнені, що хочете видалити фото?')) {
+                document.getElementById('deleteImageForm').submit();
+            }
+        }
+    </script>
+}

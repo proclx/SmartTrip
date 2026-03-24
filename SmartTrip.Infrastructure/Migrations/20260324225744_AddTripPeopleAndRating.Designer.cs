@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartTrip.Data;
@@ -11,9 +12,11 @@ using SmartTrip.Data;
 namespace SmartTrip.Migrations
 {
     [DbContext(typeof(SmartTripDbContext))]
-    partial class SmartTripDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260324225744_AddTripPeopleAndRating")]
+    partial class AddTripPeopleAndRating
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -230,6 +233,9 @@ namespace SmartTrip.Migrations
                     b.Property<int>("TripId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("TripId1")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("UploadDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -240,6 +246,8 @@ namespace SmartTrip.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("TripId");
+
+                    b.HasIndex("TripId1");
 
                     b.HasIndex("UserId");
 
@@ -296,9 +304,6 @@ namespace SmartTrip.Migrations
 
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsFavorite")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("PeopleCount")
                         .HasColumnType("integer");
@@ -492,13 +497,17 @@ namespace SmartTrip.Migrations
             modelBuilder.Entity("SmartTrip.Models.Photo", b =>
                 {
                     b.HasOne("SmartTrip.Models.Trip", "Trip")
-                        .WithMany("Photos")
+                        .WithMany()
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SmartTrip.Models.User", "User")
+                    b.HasOne("SmartTrip.Models.Trip", null)
                         .WithMany("Photos")
+                        .HasForeignKey("TripId1");
+
+                    b.HasOne("SmartTrip.Models.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -564,11 +573,6 @@ namespace SmartTrip.Migrations
             modelBuilder.Entity("SmartTrip.Models.TripDay", b =>
                 {
                     b.Navigation("ItineraryItems");
-                });
-
-            modelBuilder.Entity("SmartTrip.Models.User", b =>
-                {
-                    b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618
         }

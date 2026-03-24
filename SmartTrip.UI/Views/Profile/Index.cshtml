@@ -1,0 +1,89 @@
+@model SmartTrip.UI.ViewModels.EditProfileViewModel
+
+@{
+    ViewData["Title"] = "Мій профіль";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-lg">
+                <div class="card-body p-5">
+                    <h2 class="mb-4">Мій профіль</h2>
+
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-4">
+                            <div class="profile-image-container">
+                                @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
+                                {
+                                    <img src="@Model.ProfileImageUrl" alt="Фото профіля" class="img-fluid rounded-circle" style="width: 200px; height: 200px; object-fit: cover; border: 3px solid #007bff;" />
+                                }
+                                else
+                                {
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; margin: 0 auto; border: 3px solid #ccc;">
+                                        <i class="fas fa-user" style="font-size: 80px; color: #999;"></i>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="info-section">
+                                <h5 class="mb-3">Інформація про профіль</h5>
+                                
+                                <div class="mb-3">
+                                    <label class="text-muted">Ім'я:</label>
+                                    <p class="fs-5">@Model.FirstName</p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="text-muted">Прізвище:</label>
+                                    <p class="fs-5">@Model.LastName</p>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="text-muted">Емейл:</label>
+                                    <p class="fs-5">@Model.Email</p>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    <a href="@Url.Action("Edit", "Profile")" class="btn btn-primary">
+                                        <i class="fas fa-edit"></i> Редагувати профіль
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="text-center">
+                        <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Назад на головну</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-image-container {
+        margin-bottom: 20px;
+    }
+
+    .info-section {
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .info-section label {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .info-section p {
+        margin: 0;
+        color: #333;
+    }
+</style>

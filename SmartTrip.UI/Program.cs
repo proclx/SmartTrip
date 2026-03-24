@@ -37,6 +37,9 @@ try
     //gallery
     builder.Services.AddScoped<IGalleryService, GalleryService>();
 
+    // profile
+    builder.Services.AddScoped<IProfileService, ProfileService>();
+
     //email sender
     builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
 
