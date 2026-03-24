@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SmartTrip.Domain\SmartTrip.Domain.csproj" />
+    <ProjectReference Include="..\SmartTrip.Infrastructure\SmartTrip.Infrastructure.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -32,6 +32,7 @@ try
     // Add services to the container.
     builder.Services.AddControllersWithViews();
     builder.Services.AddScoped<IAuthService, AuthService>();
+    builder.Services.AddScoped<ITripService, TripService>();
 
     //email sender
     builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
