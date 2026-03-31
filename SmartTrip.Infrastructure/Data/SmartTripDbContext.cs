@@ -19,6 +19,8 @@ namespace SmartTrip.Data
         // Додаємо нову таблицю для галереї
         public DbSet<Photo> Photos { get; set; }
 
+        public DbSet<DreamPlace> DreamPlaces { get; set; }
+
         public DbSet<DefaultPackingItem> DefaultPackingItems { get; set; }
         public DbSet<TripPackingItem> TripPackingItems { get; set; }
 

@@ -1,0 +1,49 @@
+@model SmartTrip.Models.DreamPlace
+
+@{
+    ViewData["Title"] = "Додати місце";
+}
+
+<div class="container mt-4">
+    <h2>Додати омріяне місце</h2>
+    <hr />
+    <div class="row">
+        <div class="col-md-6">
+            <form asp-action="Create" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="control-label">Назва місця</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="control-label">Опис</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label asp-for="LocationInfo" class="control-label">Локація / Деталі розташування</label>
+                    <input asp-for="LocationInfo" class="form-control" />
+                    <span asp-validation-for="LocationInfo" class="text-danger"></span>
+                </div>
+                
+                <div class="form-group mb-4">
+                    <label class="control-label">Завантажити фото</label>
+                    <input type="file" name="photoFile" class="form-control" accept="image/*" />
+                </div>
+                
+                <div class="form-group">
+                    <input type="submit" value="Зберегти" class="btn btn-primary" />
+                    <a asp-action="Index" class="btn btn-secondary">Назад до списку</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

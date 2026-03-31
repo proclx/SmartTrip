@@ -207,6 +207,36 @@ namespace SmartTrip.Migrations
                     b.ToTable("DefaultPackingItems");
                 });
 
+            modelBuilder.Entity("SmartTrip.Models.DreamPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LocationInfo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DreamPlaces");
+                });
+
             modelBuilder.Entity("SmartTrip.Models.ItineraryItem", b =>
                 {
                     b.Property<int>("Id")
