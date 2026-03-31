@@ -23,5 +23,6 @@ namespace SmartTrip.Application.Interfaces
 
         // переключити статус улюбленої подорожі
         Task<bool> ToggleFavoriteAsync(int tripId, string userId);
+        Task<Trip> GetTripDetailsAsync(int tripId);
     }
 }

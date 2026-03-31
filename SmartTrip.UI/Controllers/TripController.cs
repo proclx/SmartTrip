@@ -38,10 +38,12 @@ namespace SmartTrip.UI.Controllers
 
             var userId = _userManager.GetUserId(User);
 
-            await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartDate, model.EndDate);
+            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartDate, model.EndDate);
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Itinerary", new { id = newTripId });
         }
+
+
 
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -81,6 +83,37 @@ namespace SmartTrip.UI.Controllers
                 Rating = trip.Rating,
                 IsFavorite = trip.IsFavorite,
                 Photos = trip.Photos?.Select(p => new TripPhotoViewModel { Id = p.Id, FilePath = p.FilePath }).ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Itinerary(int id)
+        {
+            var trip = await _tripService.GetTripDetailsAsync(id);
+            if (trip == null) return NotFound();
+
+            var model = new ItineraryViewModel
+            {
+                TripId = trip.Id,
+                CityName = trip.City?.Name ?? "Невідоме місто",
+                StartDate = trip.StartDate,
+                EndDate = trip.EndDate,
+                Days = trip.TripDays.Select(d => new ItineraryDayViewModel
+                {
+                    DayIndex = d.DayNumber,
+                    Date = d.Date,
+                    Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
+                    {
+                        PlaceName = i.Place?.Name ?? "Невідоме місце",
+                        PlaceType = i.Place?.Type.ToString() ?? "", 
+                        Rating = i.Place?.Rating,
+                        StartTime = i.StartTime,
+                        EndTime = i.EndTime,
+                        Notes = i.Notes ?? string.Empty
+                    }).ToList()
+                }).ToList()
             };
 
             return View(model);

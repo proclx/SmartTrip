@@ -1,0 +1,86 @@
+﻿@model SmartTrip.UI.ViewModels.ItineraryViewModel
+
+@{
+    ViewData["Title"] = "Мій розклад";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold">Подорож до міста @Model.CityName 🌍</h1>
+        <p class="text-muted fs-5">
+            З @Model.StartDate.ToString("dd.MM.yyyy") по @Model.EndDate.ToString("dd.MM.yyyy")
+        </p>
+    </div>
+
+    @if (Model.Days == null || !Model.Days.Any())
+    {
+        <div class="alert alert-warning text-center">
+            Розклад ще генерується або сталася помилка. Спробуйте оновити сторінку за хвилину.
+        </div>
+    }
+    else
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+
+                @foreach (var day in Model.Days)
+                {
+                    <div class="card shadow-sm mb-4 border-0">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h4 class="mb-0">
+                                День @day.DayIndex <small class="text-light ms-2">(@day.Date.ToString("dd MMMM, dddd"))</small>
+                            </h4>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush">
+                                @if (day.Items != null && day.Items.Any())
+                                {
+                                    @foreach (var item in day.Items)
+                                    {
+                                        <li class="list-group-item p-4">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div>
+                                                    <h5 class="mb-1 text-dark fw-bold">
+                                                        @if (string.Equals(item.PlaceType, "Hotel", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <span>🏨</span>
+                                                        }
+                                                        else if (string.Equals(item.PlaceType, "Restaurant", StringComparison.OrdinalIgnoreCase))
+                                                        {
+                                                            <span>🍽️</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span>📸</span>
+                                                        }
+
+                                                        @item.PlaceName
+                                                    </h5>
+                                                    <p class="mb-1 text-muted">@item.Notes</p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-light text-dark fs-6 border">
+                                                        ⏰ @item.StartTime.ToString(@"hh\:mm") - @item.EndTime.ToString(@"hh\:mm")
+                                                    </span>
+                                                    <br />
+                                                    <small class="text-warning fw-bold">★ @((item.Rating ?? 0).ToString("0.0"))</small>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    }
+                                }
+                                else
+                                {
+                                    <li class="list-group-item text-muted text-center py-4">
+                                        Для цього дня подій не знайдено.
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
+</div>

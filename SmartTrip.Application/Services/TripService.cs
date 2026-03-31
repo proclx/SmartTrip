@@ -13,10 +13,12 @@ namespace SmartTrip.Application.Services
     public class TripService : ITripService
     {
         private readonly SmartTripDbContext _context;
+        private readonly ITripGeneratorService _tripGeneratorService;
 
-        public TripService(SmartTripDbContext context)
+        public TripService(SmartTripDbContext context, ITripGeneratorService tripGeneratorService)
         {
             _context = context;
+            _tripGeneratorService = tripGeneratorService;
         }
 
         public async Task<int> CreateTripAsync(string userId, string destinationName, DateTime startDate, DateTime endDate)
@@ -63,6 +65,8 @@ namespace SmartTrip.Application.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await _tripGeneratorService.GenerateItineraryAsync(trip.Id);
 
             return trip.Id;
         }
@@ -117,6 +121,16 @@ namespace SmartTrip.Application.Services
             trip.IsFavorite = !trip.IsFavorite;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<Trip> GetTripDetailsAsync(int tripId)
+        {
+            return await _context.Trips
+                .Include(t => t.City)
+                .Include(t => t.TripDays.OrderBy(d => d.DayNumber)) // Беремо дні по порядку
+                    .ThenInclude(d => d.ItineraryItems.OrderBy(i => i.StartTime)) // В кожному дні беремо події по часу
+                        .ThenInclude(i => i.Place) // Для кожної події підтягуємо інформацію про Місце
+                .FirstOrDefaultAsync(t => t.Id == tripId);
         }
     }
 }

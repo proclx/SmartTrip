@@ -33,6 +33,7 @@ try
     builder.Services.AddControllersWithViews();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ITripService, TripService>();
+    builder.Services.AddHttpClient<ITripGeneratorService, TripGeneratorService>();
 
     //gallery
     builder.Services.AddScoped<IGalleryService, GalleryService>();
