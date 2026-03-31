@@ -48,6 +48,22 @@ namespace SmartTrip.Application.Services
             _context.Trips.Add(trip);
             await _context.SaveChangesAsync();
 
+            int totalDays = (endDate.Date - startDate.Date).Days + 1;
+
+            for (int i = 0; i < totalDays; i++)
+            {
+                var tripDay = new TripDay 
+                {
+                    TripId = trip.Id,
+                    Date = startDate.AddDays(i).ToUniversalTime(),
+                    DayNumber = i + 1
+                };
+
+                _context.TripDays.Add(tripDay); 
+            }
+
+            await _context.SaveChangesAsync();
+
             return trip.Id;
         }
 
