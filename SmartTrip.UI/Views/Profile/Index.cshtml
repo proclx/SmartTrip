@@ -2,12 +2,15 @@
 
 @{
     ViewData["Title"] = "Мій профіль";
+
+    // Перелік базових категорій для випадаючого списку
+    var categories = new List<string> { "Документи та фінанси", "Одяг та взуття", "Гігієна та косметика", "Техніка", "Аптечка", "Інше" };
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card shadow-sm border-0 rounded-lg">
+            <div class="card shadow-sm border-0 rounded-lg mb-4">
                 <div class="card-body p-5">
                     <h2 class="mb-4">Мій профіль</h2>
 
@@ -30,7 +33,7 @@
                         <div class="col-md-8">
                             <div class="info-section">
                                 <h5 class="mb-3">Інформація про профіль</h5>
-                                
+
                                 <div class="mb-3">
                                     <label class="text-muted">Ім'я:</label>
                                     <p class="fs-5">@Model.FirstName</p>
@@ -54,14 +57,86 @@
                             </div>
                         </div>
                     </div>
-
-                    <hr class="my-4" />
-
-                    <div class="text-center">
-                        <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Назад на головну</a>
-                    </div>
                 </div>
             </div>
+
+            @* --- СЕКЦІЯ БАЗОВОГО ЧЕКЛИСТУ --- *@
+            <div class="card shadow-sm border-0 rounded-lg">
+                <div class="card-body p-4">
+                    <h4 class="mb-1"><i class="bi bi-card-checklist text-primary"></i> Мій базовий чеклист</h4>
+                    <p class="text-muted small mb-4">Ці речі будуть автоматично додаватися до кожної вашої нової подорожі.</p>
+
+                    @* Форма додавання *@
+                    <form asp-action="AddDefaultItem" asp-controller="Profile" method="post" class="row g-2 mb-4 align-items-center">
+                        <div class="col-md-5">
+                            <input type="text" name="name" class="form-control" placeholder="Назва речі (напр. Паспорт)" required />
+                        </div>
+                        <div class="col-md-5">
+                            <select name="category" class="form-select">
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat">@cat</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-success w-100"><i class="bi bi-plus-lg"></i> Додати</button>
+                        </div>
+                    </form>
+
+                    @* Відображення списку з групуванням *@
+                    @if (Model.DefaultPackingItems != null && Model.DefaultPackingItems.Any())
+                    {
+                        var groupedItems = Model.DefaultPackingItems.GroupBy(x => x.Category);
+
+                        <div class="accordion" id="packingAccordion">
+                            @foreach (var group in groupedItems)
+                            {
+                                // Створюємо безпечний ID для акордеона
+                                var groupId = "cat-" + Math.Abs(group.Key.GetHashCode());
+
+                                <div class="accordion-item border-0 mb-2 shadow-sm rounded">
+                                    <h2 class="accordion-header" id="heading-@groupId">
+                                        <button class="accordion-button collapsed fw-bold rounded" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-@groupId" aria-expanded="false" aria-controls="collapse-@groupId">
+                                            @group.Key <span class="badge bg-secondary ms-2">@group.Count()</span>
+                                        </button>
+                                    </h2>
+                                    <div id="collapse-@groupId" class="accordion-collapse collapse" aria-labelledby="heading-@groupId" data-bs-parent="#packingAccordion">
+                                        <div class="accordion-body p-0">
+                                            <ul class="list-group list-group-flush rounded-bottom">
+                                                @foreach (var item in group)
+                                                {
+                                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-bottom-0">
+                                                        <span>@item.Name</span>
+                                                        <form asp-action="DeleteDefaultItem" asp-controller="Profile" method="post" class="m-0">
+                                                            <input type="hidden" name="itemId" value="@item.Id" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Видалити">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light text-center border mt-3">
+                            Ваш базовий чеклист порожній. Додайте перші речі!
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <hr class="my-4" />
+            <div class="text-center">
+                <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Назад на головну</a>
+            </div>
+
         </div>
     </div>
 </div>
@@ -77,13 +152,29 @@
         border-radius: 8px;
     }
 
-    .info-section label {
-        font-weight: 600;
-        font-size: 0.9rem;
+        .info-section label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .info-section p {
+            margin: 0;
+            color: #333;
+        }
+
+    /* Стилі для чеклисту */
+    .accordion-button:not(.collapsed) {
+        background-color: #e9ecef;
+        color: #212529;
+        box-shadow: none;
     }
 
-    .info-section p {
-        margin: 0;
-        color: #333;
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+
+    .list-group-item {
+        background-color: transparent;
     }
 </style>

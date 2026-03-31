@@ -1,0 +1,81 @@
+﻿@model IEnumerable<SmartTrip.Models.TripPackingItem>
+
+@{
+    var tripId = (int)ViewData["TripId"]!;
+    var categories = new List<string> { "Документи та фінанси", "Одяг та взуття", "Гігієна та косметика", "Техніка", "Аптечка", "Інше" };
+}
+
+<div class="modal-header bg-light">
+    <h5 class="modal-title"><i class="bi bi-backpack text-primary"></i> Чеклист подорожі</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body p-4">
+
+    @* Кнопки синхронізації *@
+    <div class="d-flex justify-content-between mb-4 pb-3 border-bottom">
+        <button class="btn btn-sm btn-outline-success" onclick="syncList(@tripId)">
+            <i class="bi bi-arrow-repeat"></i> Оновити з шаблону
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="if(confirm('Точно скинути? Усі відмітки зникнуть!')) resetList(@tripId)">
+            <i class="bi bi-arrow-counterclockwise"></i> Скинути до базового
+        </button>
+    </div>
+
+    @* Форма додавання нової речі *@
+    <form id="addPackingItemForm" class="row g-2 mb-4" onsubmit="addTripItem(event, @tripId)">
+        <div class="col-md-5">
+            <input type="text" id="newItemName" class="form-control form-control-sm" placeholder="Нова річ" required />
+        </div>
+        <div class="col-md-4">
+            <select id="newItemCategory" class="form-select form-select-sm">
+                @foreach (var cat in categories)
+                {
+                    <option value="@cat">@cat</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary btn-sm w-100">
+                <i class="bi bi-plus-lg"></i> Додати
+            </button>
+        </div>
+    </form>
+
+    @* Сам список з чекбоксами *@
+    @if (!Model.Any())
+    {
+        <div class="text-center text-muted">Список порожній.</div>
+    }
+    else
+    {
+        var groupedItems = Model.GroupBy(x => x.Category);
+
+        <div class="list-group list-group-flush">
+            @foreach (var group in groupedItems)
+            {
+                <div class="fw-bold mt-3 mb-1 text-secondary small text-uppercase">@group.Key</div>
+
+                @foreach (var item in group)
+                {
+                    <div class="list-group-item d-flex justify-content-between px-0 border-0 align-items-center">
+                        <label class="d-flex gap-3 align-items-center flex-grow-1 mb-0" style="cursor: pointer;">
+                            <input class="form-check-input flex-shrink-0" type="checkbox" value="@item.Id"
+                                   style="font-size: 1.375em;"
+                                   @(item.IsChecked ? "checked" : "")
+                                   onchange="toggleItem(@item.Id, this)" />
+
+                            <span class="pt-1 form-checked-content @(item.IsChecked ? "text-decoration-line-through text-muted" : "")">
+                                @item.Name
+                            </span>
+                        </label>
+
+                        <button type="button" class="btn btn-sm text-danger border-0 px-2" onclick="deleteTripItem(@item.Id, @tripId)" title="Видалити">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>

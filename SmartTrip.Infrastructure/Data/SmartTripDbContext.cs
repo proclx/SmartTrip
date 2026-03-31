@@ -19,6 +19,9 @@ namespace SmartTrip.Data
         // Додаємо нову таблицю для галереї
         public DbSet<Photo> Photos { get; set; }
 
+        public DbSet<DefaultPackingItem> DefaultPackingItems { get; set; }
+        public DbSet<TripPackingItem> TripPackingItems { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -36,6 +39,12 @@ namespace SmartTrip.Data
                 .WithMany(u => u.Photos)
                 .HasForeignKey(p => p.UserId)
                 .OnDelete(DeleteBehavior.NoAction); // Не видаляємо юзера, якщо видалено фото
+
+            builder.Entity<TripPackingItem>()    
+                .HasOne(p => p.Trip)  
+                .WithMany(t => t.PackingItems) 
+                .HasForeignKey(p => p.TripId) 
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

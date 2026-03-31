@@ -2,23 +2,30 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SmartTrip.Application.Interfaces;
+using SmartTrip.Application.Services;
 using SmartTrip.Models;
 using SmartTrip.UI.ViewModels;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace SmartTrip.UI.Controllers
 {
-    [Authorize] 
+    [Authorize]
     public class TripController : Controller
     {
         private readonly ITripService _tripService;
         private readonly IGalleryService _galleryService;
         private readonly UserManager<User> _userManager;
+        private readonly IPackingService _packingService; 
 
-        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager)
+        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService)
         {
             _tripService = tripService;
             _galleryService = galleryService;
             _userManager = userManager;
+            _packingService = packingService; 
         }
 
         [HttpGet]
@@ -38,7 +45,7 @@ namespace SmartTrip.UI.Controllers
 
             var userId = _userManager.GetUserId(User);
 
-            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartDate, model.EndDate);
+            var newTripId = await _tripService.CreateTripAsync(userId!, model.DestinationName, model.StartDate, model.EndDate);
 
             return RedirectToAction("Itinerary", new { id = newTripId });
         }
@@ -49,7 +56,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
-            var trips = await _tripService.GetUserTripsAsync(userId);
+            var trips = await _tripService.GetUserTripsAsync(userId!);
 
             var model = trips.Select(t => new TripViewModel
             {
@@ -70,7 +77,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var trip = await _tripService.GetTripByIdAsync(id, userId);
+            var trip = await _tripService.GetTripByIdAsync(id, userId!);
             if (trip == null) return NotFound();
 
             var model = new TripViewModel
@@ -107,7 +114,7 @@ namespace SmartTrip.UI.Controllers
                     Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
                     {
                         PlaceName = i.Place?.Name ?? "Невідоме місце",
-                        PlaceType = i.Place?.Type.ToString() ?? "", 
+                        PlaceType = i.Place?.Type.ToString() ?? "",
                         Rating = i.Place?.Rating,
                         StartTime = i.StartTime,
                         EndTime = i.EndTime,
@@ -123,7 +130,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Edit(int id)
         {
             var userId = _userManager.GetUserId(User);
-            var trip = await _tripService.GetTripByIdAsync(id, userId);
+            var trip = await _tripService.GetTripByIdAsync(id, userId!);
             if (trip == null) return NotFound();
 
             var model = new EditTripViewModel
@@ -144,7 +151,7 @@ namespace SmartTrip.UI.Controllers
                 return View(model);
 
             var userId = _userManager.GetUserId(User);
-            var success = await _tripService.UpdateTripAsync(model.Id, userId, model.PeopleCount, model.Rating);
+            var success = await _tripService.UpdateTripAsync(model.Id, userId!, model.PeopleCount, model.Rating);
 
             if (!success)
             {
@@ -166,7 +173,7 @@ namespace SmartTrip.UI.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
-            await _galleryService.UploadPhotosAsync(files, tripId, userId);
+            await _galleryService.UploadPhotosAsync(files, tripId, userId!);
 
             return RedirectToAction("Details", new { id = tripId });
         }
@@ -176,7 +183,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> DeletePhoto(int tripId, int photoId)
         {
             var userId = _userManager.GetUserId(User);
-            await _galleryService.DeletePhotoAsync(photoId, userId);
+            await _galleryService.DeletePhotoAsync(photoId, userId!);
             return RedirectToAction("Details", new { id = tripId });
         }
 
@@ -185,7 +192,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> ToggleFavorite(int id)
         {
             var userId = _userManager.GetUserId(User);
-            await _tripService.ToggleFavoriteAsync(id, userId);
+            await _tripService.ToggleFavoriteAsync(id, userId!);
             return RedirectToAction("Index");
         }
 
@@ -193,7 +200,7 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Favorites()
         {
             var userId = _userManager.GetUserId(User);
-            var trips = await _tripService.GetFavoriteTripsAsync(userId);
+            var trips = await _tripService.GetFavoriteTripsAsync(userId!);
 
             var model = trips.Select(t => new TripViewModel
             {
@@ -208,6 +215,66 @@ namespace SmartTrip.UI.Controllers
             }).ToList();
 
             return View(model);
+        }
+
+        // --- МЕТОДИ ДЛЯ ЧЕКЛИСТУ ---
+
+        // Завантажує вміст чеклисту для модального вікна
+        [HttpGet]
+        public async Task<IActionResult> GetPackingListModal(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            var items = await _packingService.GetTripItemsAsync(tripId, userId!);
+
+            // Передаємо TripId у ViewData, щоб знати, куди додавати нові речі
+            ViewData["TripId"] = tripId;
+
+            // Повертаємо PartialView (ми її зараз створимо)
+            return PartialView("_PackingListPartial", items);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TogglePackingItem(int itemId)
+        {
+            var userId = _userManager.GetUserId(User);
+            await _packingService.ToggleItemStatusAsync(itemId, userId!);
+            return Ok(); // Повертаємо 200 OK для AJAX
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddTripPackingItem(int tripId, string name, string category)
+        {
+            var userId = _userManager.GetUserId(User);
+            await _packingService.AddTripItemAsync(tripId, name, category, userId!);
+
+            // Повертаємо оновлений список
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SyncPackingList(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            await _packingService.SyncWithDefaultListAsync(tripId, userId!);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPackingList(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            await _packingService.ResetToDefaultListAsync(tripId, userId!);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteTripPackingItem(int itemId, int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            await _packingService.DeleteTripItemAsync(itemId, userId!);
+
+            // Після видалення повертаємо оновлений HTML модалки
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
         }
     }
 }

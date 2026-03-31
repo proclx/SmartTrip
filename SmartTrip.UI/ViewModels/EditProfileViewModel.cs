@@ -20,5 +20,6 @@ namespace SmartTrip.UI.ViewModels
 
         [Display(Name = "Завантажити нове фото")]
         public IFormFile? ImageFile { get; set; }
+        public IEnumerable<SmartTrip.Models.DefaultPackingItem> DefaultPackingItems { get; set; } = new List<SmartTrip.Models.DefaultPackingItem>();
     }
 }

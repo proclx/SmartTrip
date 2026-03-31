@@ -51,6 +51,9 @@
                             <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
                             <a class="btn btn-sm btn-outline-primary" asp-action="Itinerary" asp-route-id="@trip.Id">Розклад</a>
                             <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@trip.Id">Редагувати</a>
+
+                            <button type="button" class="btn btn-sm btn-outline-success" onclick="openPackingModal(@trip.Id)">🎒 Чеклист</button>
+                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
                         </div>
                     </div>
                 </div>
@@ -58,3 +61,73 @@
         </div>
     }
 </div>
+
+<div class="modal fade" id="packingListModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content" id="packingListModalContent">
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Відкриває модалку і завантажує вміст
+        function openPackingModal(tripId) {
+            $('#packingListModalContent').html('<div class="p-5 text-center"><div class="spinner-border text-primary"></div></div>');
+            var myModal = new bootstrap.Modal(document.getElementById('packingListModal'));
+            myModal.show();
+
+            $.get('/Trip/GetPackingListModal?tripId=' + tripId, function (data) {
+                $('#packingListModalContent').html(data);
+            });
+        }
+
+        // Перемикає статус галочки
+        function toggleItem(itemId, checkbox) {
+            var labelSpan = $(checkbox).siblings('span');
+
+            $.post('/Trip/TogglePackingItem', { itemId: itemId }, function () {
+                // Візуально перекреслюємо текст, якщо галочка стоїть
+                if(checkbox.checked) {
+                    labelSpan.addClass('text-decoration-line-through text-muted');
+                } else {
+                    labelSpan.removeClass('text-decoration-line-through text-muted');
+                }
+            });
+        }
+
+        // Додає нову річ
+        function addTripItem(e, tripId) {
+            e.preventDefault();
+            var name = $('#newItemName').val();
+            var cat = $('#newItemCategory').val();
+
+            $.post('/Trip/AddTripPackingItem', { tripId: tripId, name: name, category: cat }, function (data) {
+                $('#packingListModalContent').html(data); // Оновлюємо вміст модалки
+            });
+        }
+
+        // Оновити з шаблону
+        function syncList(tripId) {
+            $.post('/Trip/SyncPackingList', { tripId: tripId }, function (data) {
+                $('#packingListModalContent').html(data);
+            });
+        }
+
+        // Скинути до дефолтного
+        function resetList(tripId) {
+            $.post('/Trip/ResetPackingList', { tripId: tripId }, function (data) {
+                $('#packingListModalContent').html(data);
+            });
+        }
+
+        // Видаляє конкретну річ з чеклисту подорожі
+        function deleteTripItem(itemId, tripId) {
+            if(confirm('Ви впевнені, що хочете видалити цю річ?')) {
+                $.post('/Trip/DeleteTripPackingItem', { itemId: itemId, tripId: tripId }, function (data) {
+                    $('#packingListModalContent').html(data); // Оновлюємо вміст модалки
+                });
+            }
+        }
+    </script>
+}

@@ -13,14 +13,15 @@ namespace SmartTrip.UI.Controllers
     {
         private readonly IProfileService _profileService;
         private readonly SignInManager<User> _signInManager;
+        private readonly IPackingService _packingService; // 1. Додаємо сервіс чеклистів
 
-        public ProfileController(IProfileService profileService, SignInManager<User> signInManager)
+        public ProfileController(IProfileService profileService, SignInManager<User> signInManager, IPackingService packingService)
         {
             _profileService = profileService;
             _signInManager = signInManager;
+            _packingService = packingService; // 2. Ініціалізуємо сервіс
         }
 
-        // Відображення профіля користувача
         [HttpGet]
         public async Task<IActionResult> Index()
         {
@@ -30,18 +31,21 @@ namespace SmartTrip.UI.Controllers
             if (user == null)
                 return NotFound();
 
+            // 3. Отримуємо базовий чеклист користувача
+            var defaultItems = await _packingService.GetDefaultItemsAsync(userId!);
+
             var model = new EditProfileViewModel
             {
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                ProfileImageUrl = user.ProfileImageUrl
+                ProfileImageUrl = user.ProfileImageUrl,
+                DefaultPackingItems = defaultItems // 4. Передаємо у модель
             };
 
             return View(model);
         }
 
-        // Сторінка редагування профіля
         [HttpGet]
         public async Task<IActionResult> Edit()
         {
@@ -62,7 +66,6 @@ namespace SmartTrip.UI.Controllers
             return View(model);
         }
 
-        // Оновлення даних профіля
         [HttpPost]
         public async Task<IActionResult> Edit(EditProfileViewModel model)
         {
@@ -73,7 +76,6 @@ namespace SmartTrip.UI.Controllers
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Оновлюємо текстові дані
             var success = await _profileService.UpdateUserProfileAsync(userId!, model.FirstName!, model.LastName!, model.Email!);
 
             if (!success)
@@ -82,7 +84,6 @@ namespace SmartTrip.UI.Controllers
                 return View(model);
             }
 
-            // Якщо користувач завантажив нове фото
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
                 var imageSuccess = await _profileService.UploadProfileImageAsync(userId!, model.ImageFile);
@@ -93,7 +94,6 @@ namespace SmartTrip.UI.Controllers
                 }
             }
 
-            // Оновлюємо сесію користувача, якщо змінився Email або інша інформація
             var updatedUser = await _profileService.GetUserProfileAsync(userId!);
             if (updatedUser != null)
             {
@@ -103,7 +103,6 @@ namespace SmartTrip.UI.Controllers
             return RedirectToAction("Index");
         }
 
-        // Видалення фото профіля
         [HttpPost]
         public async Task<IActionResult> DeleteImage()
         {
@@ -114,6 +113,29 @@ namespace SmartTrip.UI.Controllers
             {
                 return BadRequest("Помилка при видаленні зображення.");
             }
+
+            return RedirectToAction("Index");
+        }
+
+        // --- МЕТОДИ ДЛЯ БАЗОВОГО ЧЕКЛИСТУ ---
+
+        [HttpPost]
+        public async Task<IActionResult> AddDefaultItem(string name, string category)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return RedirectToAction("Index");
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _packingService.AddDefaultItemAsync(userId!, name, category);
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteDefaultItem(int itemId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _packingService.DeleteDefaultItemAsync(itemId, userId!);
 
             return RedirectToAction("Index");
         }
