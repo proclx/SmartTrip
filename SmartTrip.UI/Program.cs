@@ -39,6 +39,9 @@ try
     //gallery
     builder.Services.AddScoped<IGalleryService, GalleryService>();
 
+    //package item
+    builder.Services.AddScoped<IPackingService, PackingService>();
+
     // profile
     builder.Services.AddScoped<IProfileService, ProfileService>();
 

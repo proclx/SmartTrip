@@ -1,26 +1,34 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using SmartTrip.Application.Interfaces;
+using SmartTrip.Application.Services;
 using SmartTrip.Models;
 using SmartTrip.UI.ViewModels;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace SmartTrip.UI.Controllers
 {
-    [Authorize] 
+    [Authorize]
     public class TripController : Controller
     {
         private readonly ITripService _tripService;
         private readonly IGalleryService _galleryService;
         private readonly UserManager<User> _userManager;
+        private readonly IPackingService _packingService;
 
-        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager)
+        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService)
         {
             _tripService = tripService;
             _galleryService = galleryService;
             _userManager = userManager;
+            _packingService = packingService;
         }
 
         [HttpGet]
@@ -39,13 +47,15 @@ namespace SmartTrip.UI.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
 
             var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartingPoint, model.StartDate, model.EndDate);
 
             return RedirectToAction("Itinerary", new { id = newTripId });
         }
-
-
 
         [HttpGet]
         public async Task<IActionResult> Index()
@@ -327,6 +337,70 @@ namespace SmartTrip.UI.Controllers
             }).ToList();
 
             return View(model);
+        }
+
+        // --- МЕТОДИ ДЛЯ ЧЕКЛИСТУ ---
+
+        [HttpGet]
+        public async Task<IActionResult> GetPackingListModal(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var items = await _packingService.GetTripItemsAsync(tripId, userId);
+            ViewData["TripId"] = tripId;
+
+            return PartialView("_PackingListPartial", items);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TogglePackingItem(int itemId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _packingService.ToggleItemStatusAsync(itemId, userId);
+            return Ok(); 
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddTripPackingItem(int tripId, string name, string category)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _packingService.AddTripItemAsync(tripId, name, category, userId);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SyncPackingList(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _packingService.SyncWithDefaultListAsync(tripId, userId);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPackingList(int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _packingService.ResetToDefaultListAsync(tripId, userId);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteTripPackingItem(int itemId, int tripId)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _packingService.DeleteTripItemAsync(itemId, userId);
+            return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
         }
     }
 }

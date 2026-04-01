@@ -180,6 +180,63 @@ namespace SmartTrip.Migrations
                     b.ToTable("Cities");
                 });
 
+            modelBuilder.Entity("SmartTrip.Models.DefaultPackingItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DefaultPackingItems");
+                });
+
+            modelBuilder.Entity("SmartTrip.Models.DreamPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LocationInfo")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DreamPlaces");
+                });
+
             modelBuilder.Entity("SmartTrip.Models.ItineraryItem", b =>
                 {
                     b.Property<int>("Id")
@@ -346,6 +403,35 @@ namespace SmartTrip.Migrations
                     b.ToTable("TripDays");
                 });
 
+            modelBuilder.Entity("SmartTrip.Models.TripPackingItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsChecked")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("TripPackingItems");
+                });
+
             modelBuilder.Entity("SmartTrip.Models.User", b =>
                 {
                     b.Property<string>("Id")
@@ -470,6 +556,17 @@ namespace SmartTrip.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("SmartTrip.Models.DefaultPackingItem", b =>
+                {
+                    b.HasOne("SmartTrip.Models.User", "User")
+                        .WithMany("DefaultPackingItems")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SmartTrip.Models.ItineraryItem", b =>
                 {
                     b.HasOne("SmartTrip.Models.Place", "Place")
@@ -549,6 +646,17 @@ namespace SmartTrip.Migrations
                     b.Navigation("Trip");
                 });
 
+            modelBuilder.Entity("SmartTrip.Models.TripPackingItem", b =>
+                {
+                    b.HasOne("SmartTrip.Models.Trip", "Trip")
+                        .WithMany("PackingItems")
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trip");
+                });
+
             modelBuilder.Entity("SmartTrip.Models.City", b =>
                 {
                     b.Navigation("Places");
@@ -556,6 +664,8 @@ namespace SmartTrip.Migrations
 
             modelBuilder.Entity("SmartTrip.Models.Trip", b =>
                 {
+                    b.Navigation("PackingItems");
+
                     b.Navigation("Photos");
 
                     b.Navigation("TripDays");
@@ -568,6 +678,8 @@ namespace SmartTrip.Migrations
 
             modelBuilder.Entity("SmartTrip.Models.User", b =>
                 {
+                    b.Navigation("DefaultPackingItems");
+
                     b.Navigation("Photos");
                 });
 #pragma warning restore 612, 618

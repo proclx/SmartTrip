@@ -1,0 +1,32 @@
+@model SmartTrip.Models.DreamPlace
+
+@{
+    ViewData["Title"] = "Видалити омріяне місце";
+}
+
+<div class="container mt-5 text-center">
+    <div class="card p-4 mx-auto" style="max-width: 500px;">
+        <h3>Ви впевнені, що бажаєте видалити місце?</h3>
+        <h4 class="text-danger">@Model.Name</h4>
+        
+        <hr />
+        
+        @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+        {
+            <div class="mb-3">
+                <img src="@Model.PhotoUrl" alt="@Model.Name" class="img-fluid rounded" style="max-height: 250px;" />
+            </div>
+        }
+        
+        <dl class="row text-start mt-3">
+            <dt class="col-sm-4">Локація:</dt>
+            <dd class="col-sm-8 mb-2">@(string.IsNullOrEmpty(Model.LocationInfo) ? "Не вказано" : Model.LocationInfo)</dd>
+        </dl>
+        
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="Id" />
+            <input type="submit" value="Підтвердити видалення" class="btn btn-danger" />
+            <a asp-action="Index" class="btn btn-secondary">Скасувати</a>
+        </form>
+    </div>
+</div>

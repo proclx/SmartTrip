@@ -36,5 +36,7 @@ namespace SmartTrip.Models
 
         public List<TripDay> TripDays { get; set; } = new();
         public List<Photo> Photos { get; set; } = new();
+
+        public List<TripPackingItem> PackingItems { get; set; } = new();
     }
 }

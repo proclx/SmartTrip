@@ -14,11 +14,14 @@ namespace SmartTrip.Application.Services
     {
         private readonly SmartTripDbContext _context;
         private readonly ITripGeneratorService _tripGeneratorService;
+        private readonly IPackingService _packingService; // Додано сервіс чеклистів
 
-        public TripService(SmartTripDbContext context, ITripGeneratorService tripGeneratorService)
+        // Додаємо IPackingService в конструктор
+        public TripService(SmartTripDbContext context, ITripGeneratorService tripGeneratorService, IPackingService packingService)
         {
             _context = context;
             _tripGeneratorService = tripGeneratorService;
+            _packingService = packingService;
         }
 
         public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate)
@@ -41,7 +44,7 @@ namespace SmartTrip.Application.Services
                 city = new City
                 {
                     Name = destinationName,
-                    Country = "Не вказано" 
+                    Country = "Не вказано"
                 };
 
                 _context.Cities.Add(city);
@@ -59,25 +62,28 @@ namespace SmartTrip.Application.Services
             };
 
             _context.Trips.Add(trip);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(); // Тут база генерує trip.Id
 
             int totalDays = (endDate.Date - startDate.Date).Days + 1;
 
             for (int i = 0; i < totalDays; i++)
             {
-                var tripDay = new TripDay 
+                var tripDay = new TripDay
                 {
                     TripId = trip.Id,
                     Date = startDate.AddDays(i).ToUniversalTime(),
                     DayNumber = i + 1
                 };
 
-                _context.TripDays.Add(tripDay); 
+                _context.TripDays.Add(tripDay);
             }
 
             await _context.SaveChangesAsync();
 
             await _tripGeneratorService.GenerateItineraryAsync(trip.Id);
+
+            // ВИКЛИКАЄМО КОПІЮВАННЯ ДЕФОЛТНОГО СПИСКУ
+            await _packingService.InitializeTripListAsync(trip.Id, userId);
 
             return trip.Id;
         }
