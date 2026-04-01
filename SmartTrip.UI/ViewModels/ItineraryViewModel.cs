@@ -9,6 +9,9 @@ namespace SmartTrip.UI.ViewModels
         public string CityName { get; set; } = string.Empty;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public string? StartingPoint { get; set; }
+        public string? RouteToDestination { get; set; }
+        public string? RouteBack { get; set; }
 
         public List<ItineraryDayViewModel> Days { get; set; } = new();
     }

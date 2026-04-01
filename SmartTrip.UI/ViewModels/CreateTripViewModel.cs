@@ -8,6 +8,10 @@ namespace SmartTrip.UI.ViewModels
         [Display(Name = "Місто (наприклад: Париж)")]
         public string DestinationName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "Введіть точку відправлення")]
+        [Display(Name = "Звідки ви їдете? (наприклад: Київ)")]
+        public string StartingPoint { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Вкажіть дату початку")]
         [DataType(DataType.Date)]
         [Display(Name = "Дата початку")]

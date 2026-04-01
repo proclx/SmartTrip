@@ -30,6 +30,10 @@ namespace SmartTrip.Models
 
         public bool IsFavorite { get; set; } = false;
 
+        public string? StartingPoint { get; set; }
+        public string? RouteToDestination { get; set; }
+        public string? RouteBack { get; set; }
+
         public List<TripDay> TripDays { get; set; } = new();
         public List<Photo> Photos { get; set; } = new();
     }

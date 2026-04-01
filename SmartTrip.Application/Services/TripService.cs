@@ -21,8 +21,18 @@ namespace SmartTrip.Application.Services
             _tripGeneratorService = tripGeneratorService;
         }
 
-        public async Task<int> CreateTripAsync(string userId, string destinationName, DateTime startDate, DateTime endDate)
+        public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate)
         {
+            // Add missing columns if they don't exist
+            try
+            {
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Trips\" ADD COLUMN IF NOT EXISTS \"StartingPoint\" text;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Trips\" ADD COLUMN IF NOT EXISTS \"RouteToDestination\" text;");
+                await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Trips\" ADD COLUMN IF NOT EXISTS \"RouteBack\" text;");
+                await _context.Database.ExecuteSqlRawAsync("INSERT INTO \"__EFMigrationsHistory\" (\"MigrationId\", \"ProductVersion\") VALUES ('20260401000000_AddStartingPointAndRoutes', '8.0.0') ON CONFLICT DO NOTHING;");
+            }
+            catch { }
+
             var city = await _context.Cities
                 .FirstOrDefaultAsync(c => c.Name.ToLower() == destinationName.ToLower());
 
@@ -44,7 +54,8 @@ namespace SmartTrip.Application.Services
                 CityId = city.Id,
                 StartDate = startDate.ToUniversalTime(),
                 EndDate = endDate.ToUniversalTime(),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                StartingPoint = startingPoint
             };
 
             _context.Trips.Add(trip);

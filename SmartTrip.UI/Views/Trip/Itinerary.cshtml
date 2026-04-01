@@ -10,6 +10,9 @@
         <p class="text-muted fs-5">
             З @Model.StartDate.ToString("dd.MM.yyyy") по @Model.EndDate.ToString("dd.MM.yyyy")
         </p>
+        <a href="@Url.Action("ExportPdf", "Trip", new { id = Model.TripId })" class="btn btn-success btn-lg">
+            📄 Завантажити PDF
+        </a>
     </div>
 
     @if (Model.Days == null || !Model.Days.Any())
@@ -20,6 +23,31 @@
     }
     else
     {
+        @if (!string.IsNullOrEmpty(Model.StartingPoint))
+        {
+            <div class="row justify-content-center mb-4">
+                <div class="col-md-10">
+                    <div class="card shadow-sm border-0 bg-light">
+                        <div class="card-header bg-info text-white py-3">
+                            <h4 class="mb-0">🚗 Маршрути подорожі</h4>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(Model.RouteToDestination))
+                            {
+                                <h5>🚗 Туди (з @Model.StartingPoint до @Model.CityName):</h5>
+                                <div class="route-description" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">@Html.Raw(Model.RouteToDestination.Replace("\n", "<br>"))</div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.RouteBack))
+                            {
+                                <h5>🚗 Назад (з @Model.CityName до @Model.StartingPoint):</h5>
+                                <div class="route-description" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">@Html.Raw(Model.RouteBack.Replace("\n", "<br>"))</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
         <div class="row justify-content-center">
             <div class="col-md-10">
 

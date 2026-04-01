@@ -5,6 +5,7 @@ using SmartTrip.Models;
 using SmartTrip.Application.Interfaces;
 using SmartTrip.Application.Services;
 using Microsoft.AspNetCore.Identity;
+using QuestPDF;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -45,6 +46,9 @@ try
     builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
 
     var app = builder.Build();
+
+    // Configure QuestPDF license
+    QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
     // Configure the HTTP request pipeline.
     if (!app.Environment.IsDevelopment())

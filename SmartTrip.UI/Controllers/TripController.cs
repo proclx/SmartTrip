@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using SmartTrip.Application.Interfaces;
 using SmartTrip.Models;
 using SmartTrip.UI.ViewModels;
@@ -38,7 +40,7 @@ namespace SmartTrip.UI.Controllers
 
             var userId = _userManager.GetUserId(User);
 
-            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartDate, model.EndDate);
+            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartingPoint, model.StartDate, model.EndDate);
 
             return RedirectToAction("Itinerary", new { id = newTripId });
         }
@@ -49,6 +51,10 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Index()
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var trips = await _tripService.GetUserTripsAsync(userId);
 
             var model = trips.Select(t => new TripViewModel
@@ -70,6 +76,10 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var trip = await _tripService.GetTripByIdAsync(id, userId);
             if (trip == null) return NotFound();
 
@@ -100,6 +110,9 @@ namespace SmartTrip.UI.Controllers
                 CityName = trip.City?.Name ?? "Невідоме місто",
                 StartDate = trip.StartDate,
                 EndDate = trip.EndDate,
+                StartingPoint = trip.StartingPoint,
+                RouteToDestination = trip.RouteToDestination,
+                RouteBack = trip.RouteBack,
                 Days = trip.TripDays.Select(d => new ItineraryDayViewModel
                 {
                     DayIndex = d.DayNumber,
@@ -120,9 +133,95 @@ namespace SmartTrip.UI.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> ExportPdf(int id)
+        {
+            var trip = await _tripService.GetTripDetailsAsync(id);
+            if (trip == null) return NotFound();
+
+            var model = new ItineraryViewModel
+            {
+                TripId = trip.Id,
+                CityName = trip.City?.Name ?? "Невідоме місто",
+                StartDate = trip.StartDate,
+                EndDate = trip.EndDate,
+                StartingPoint = trip.StartingPoint,
+                RouteToDestination = trip.RouteToDestination,
+                RouteBack = trip.RouteBack,
+                Days = trip.TripDays.Select(d => new ItineraryDayViewModel
+                {
+                    DayIndex = d.DayNumber,
+                    Date = d.Date,
+                    Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
+                    {
+                        PlaceName = i.Place?.Name ?? "Невідоме місце",
+                        PlaceType = i.Place?.Type.ToString() ?? "",
+                        Rating = i.Place?.Rating,
+                        StartTime = i.StartTime,
+                        EndTime = i.EndTime,
+                        Notes = i.Notes ?? string.Empty
+                    }).ToList()
+                }).ToList()
+            };
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(20); // 20 points ≈ 0.7 cm
+                    page.Header().AlignCenter().Text($"Подорож до {model.CityName}").FontSize(20).Bold();
+                    page.Content().Column(column =>
+                    {
+                        column.Spacing(10);
+
+                        // Routes
+                        if (!string.IsNullOrEmpty(model.RouteToDestination))
+                        {
+                            column.Item().Text("🚗 Маршрут туди:").Bold().FontSize(16);
+                            column.Item().Text(model.RouteToDestination).FontSize(12);
+                        }
+                        if (!string.IsNullOrEmpty(model.RouteBack))
+                        {
+                            column.Item().Text("🚗 Маршрут назад:").Bold().FontSize(16);
+                            column.Item().Text(model.RouteBack).FontSize(12);
+                        }
+
+                        column.Item().PaddingVertical(20).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+                        // Days
+                        foreach (var day in model.Days)
+                        {
+                            column.Item().Text($"День {day.DayIndex} - {day.Date:dd.MM.yyyy}").Bold().FontSize(14);
+                            foreach (var item in day.Items)
+                            {
+                                column.Item().Text($"{item.StartTime:hh\\:mm} - {item.EndTime:hh\\:mm}: {item.PlaceName} ({item.PlaceType})").FontSize(12);
+                                if (!string.IsNullOrEmpty(item.Notes))
+                                {
+                                    column.Item().Text(item.Notes).FontSize(10).Italic();
+                                }
+                                column.Item().PaddingBottom(5);
+                            }
+                            column.Item().PaddingBottom(10);
+                        }
+                    });
+                    page.Footer().AlignCenter().Text("Згенеровано SmartTrip").FontSize(10);
+                });
+            });
+
+            var stream = new MemoryStream();
+            document.GeneratePdf(stream);
+            stream.Position = 0;
+            return File(stream, "application/pdf", $"Подорож_{model.CityName}.pdf");
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var trip = await _tripService.GetTripByIdAsync(id, userId);
             if (trip == null) return NotFound();
 
@@ -144,6 +243,10 @@ namespace SmartTrip.UI.Controllers
                 return View(model);
 
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var success = await _tripService.UpdateTripAsync(model.Id, userId, model.PeopleCount, model.Rating);
 
             if (!success)
@@ -166,6 +269,10 @@ namespace SmartTrip.UI.Controllers
             }
 
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             await _galleryService.UploadPhotosAsync(files, tripId, userId);
 
             return RedirectToAction("Details", new { id = tripId });
@@ -176,6 +283,10 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> DeletePhoto(int tripId, int photoId)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             await _galleryService.DeletePhotoAsync(photoId, userId);
             return RedirectToAction("Details", new { id = tripId });
         }
@@ -185,6 +296,10 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> ToggleFavorite(int id)
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             await _tripService.ToggleFavoriteAsync(id, userId);
             return RedirectToAction("Index");
         }
@@ -193,6 +308,10 @@ namespace SmartTrip.UI.Controllers
         public async Task<IActionResult> Favorites()
         {
             var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
             var trips = await _tripService.GetFavoriteTripsAsync(userId);
 
             var model = trips.Select(t => new TripViewModel

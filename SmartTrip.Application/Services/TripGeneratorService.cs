@@ -148,11 +148,81 @@ namespace SmartTrip.Application.Services
                 }
 
                 await _context.SaveChangesAsync();
+
+                // Generate routes if starting point is provided
+                if (!string.IsNullOrEmpty(trip.StartingPoint))
+                {
+                    // Reload trip with itinerary items and places
+                    trip = await _context.Trips
+                        .Include(t => t.TripDays)
+                            .ThenInclude(d => d.ItineraryItems)
+                                .ThenInclude(i => i.Place)
+                        .FirstOrDefaultAsync(t => t.Id == tripId);
+
+                    if (trip != null)
+                    {
+                        // Route to destination
+                        trip.RouteToDestination = await GenerateRouteAsync(trip.StartingPoint, trip.City.Name);
+
+                        // Route back
+                        trip.RouteBack = await GenerateRouteAsync(trip.City.Name, trip.StartingPoint);
+
+                        await _context.SaveChangesAsync();
+                    }
+                }
             }
             catch (Exception ex)
             {
                 // Тут можна додати логування, якщо ШІ поверне невалідний JSON
                 Console.WriteLine($"Помилка генерації маршруту: {ex.Message}");
+            }
+        }
+
+        private async Task<string?> GenerateRouteAsync(string from, string to)
+        {
+            string prompt = $@"
+Опишіть коротко основні способи добратися від {from} до {to}. Включіть:
+- Літак (якщо далеко)
+- Автомобіль/автобус
+- Потяг
+- Приблизний час та відстань
+
+Поверніть відповідь українською мовою у форматі:
+🚗 **Автомобіль:** [короткий опис]
+✈️ **Літак:** [короткий опис]  
+🚂 **Потяг:** [короткий опис]
+";
+
+            var requestBody = new
+            {
+                contents = new[] { new { parts = new[] { new { text = prompt } } } }
+            };
+
+            string jsonBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            string cleanApiKey = _apiKey.Trim();
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={cleanApiKey}";
+
+            var response = await _httpClient.PostAsync(url, content);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var responseString = await response.Content.ReadAsStringAsync();
+
+            try
+            {
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var aiText = jsonDoc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text").GetString();
+
+                return aiText?.Trim();
+            }
+            catch
+            {
+                return null;
             }
         }
     }
