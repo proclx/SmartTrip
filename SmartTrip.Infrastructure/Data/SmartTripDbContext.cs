@@ -16,7 +16,6 @@ namespace SmartTrip.Data
         public DbSet<TripDay> TripDays { get; set; }
         public DbSet<ItineraryItem> ItineraryItems { get; set; }
 
-        // Додаємо нову таблицю для галереї
         public DbSet<Photo> Photos { get; set; }
 
         public DbSet<DreamPlace> DreamPlaces { get; set; }
@@ -28,14 +27,13 @@ namespace SmartTrip.Data
         {
             base.OnModelCreating(builder);
 
-            // Налаштування зв'язку: якщо видаляємо подорож — видаляються і записи про фото в БД
+            //  якщо видаляємо подорож — видаляються і записи про фото в БД
             builder.Entity<Photo>()
                 .HasOne(p => p.Trip)
                 .WithMany(t => t.Photos)
                 .HasForeignKey(p => p.TripId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Налаштування зв'язку з користувачем
             builder.Entity<Photo>()
                 .HasOne(p => p.User)
                 .WithMany(u => u.Photos)
