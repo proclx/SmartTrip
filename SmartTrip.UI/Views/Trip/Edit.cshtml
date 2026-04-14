@@ -23,7 +23,15 @@
                             <span asp-validation-for="PeopleCount" class="text-danger"></span>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-4">
+                            <label asp-for="Notes" class="form-label fw-bold text-warning">
+                                <i class="bi bi-safe"></i> Приватні нотатки (Сейф)
+                            </label>
+                            <textarea asp-for="Notes" class="form-control" rows="5" placeholder="Код від дверей, номер броні, пароль Wi-Fi..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-4">
                             <label asp-for="Rating" class="form-label"></label>
                             <select asp-for="Rating" class="form-select">
                                 <option value="">Не обрано</option>
@@ -48,5 +56,7 @@
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

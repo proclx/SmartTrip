@@ -22,15 +22,15 @@ namespace SmartTrip.UI.Controllers
         private readonly IGalleryService _galleryService;
         private readonly UserManager<User> _userManager;
         private readonly IPackingService _packingService;
-        private readonly IEventDiscoveryService _eventDiscoveryService; // Додано
+        private readonly IEventDiscoveryService _eventDiscoveryService;
 
-        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService, IEventDiscoveryService eventDiscoveryService) // Змінено
+        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService, IEventDiscoveryService eventDiscoveryService)
         {
             _tripService = tripService;
             _galleryService = galleryService;
             _userManager = userManager;
             _packingService = packingService;
-            _eventDiscoveryService = eventDiscoveryService; // Змінено
+            _eventDiscoveryService = eventDiscoveryService;
         }
 
         [HttpGet]
@@ -110,9 +110,10 @@ namespace SmartTrip.UI.Controllers
                 EndDate = trip.EndDate,
                 PeopleCount = trip.PeopleCount,
                 Rating = trip.Rating,
+                Notes = trip.Notes, // ДОДАНО: передаємо нотатки у View
                 IsFavorite = trip.IsFavorite,
                 Photos = trip.Photos?.Select(p => new TripPhotoViewModel { Id = p.Id, FilePath = p.FilePath }).ToList(),
-                SuggestedEvents = suggestedEvents // Додано
+                SuggestedEvents = suggestedEvents
             };
 
             return View(model);
@@ -140,7 +141,7 @@ namespace SmartTrip.UI.Controllers
                     Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
                     {
                         PlaceName = i.Place?.Name ?? "Невідоме місце",
-                        PlaceType = i.Place?.Type.ToString() ?? "", 
+                        PlaceType = i.Place?.Type.ToString() ?? "",
                         Rating = i.Place?.Rating,
                         StartTime = i.StartTime,
                         EndTime = i.EndTime,
@@ -188,7 +189,7 @@ namespace SmartTrip.UI.Controllers
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(20); // 20 points ≈ 0.7 cm
+                    page.Margin(20);
                     page.Header().AlignCenter().Text($"Подорож до {model.CityName}").FontSize(20).Bold();
                     page.Content().Column(column =>
                     {
@@ -249,7 +250,8 @@ namespace SmartTrip.UI.Controllers
             {
                 Id = trip.Id,
                 PeopleCount = trip.PeopleCount,
-                Rating = trip.Rating
+                Rating = trip.Rating,
+                Notes = trip.Notes // ДОДАНО: передаємо нотатки для редагування
             };
 
             return View(model);
@@ -267,7 +269,9 @@ namespace SmartTrip.UI.Controllers
             {
                 return Unauthorized();
             }
-            var success = await _tripService.UpdateTripAsync(model.Id, userId, model.PeopleCount, model.Rating);
+
+            // ДОДАНО: передаємо model.Notes у сервіс
+            var success = await _tripService.UpdateTripAsync(model.Id, userId, model.PeopleCount, model.Rating, model.Notes);
 
             if (!success)
             {
@@ -370,7 +374,7 @@ namespace SmartTrip.UI.Controllers
             if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             await _packingService.ToggleItemStatusAsync(itemId, userId);
-            return Ok(); 
+            return Ok();
         }
 
         [HttpPost]

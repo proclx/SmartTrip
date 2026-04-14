@@ -18,11 +18,12 @@ namespace SmartTrip.Application.Interfaces
         // метод для отримання детальної інформації по подорожі
         Task<Trip?> GetTripByIdAsync(int tripId, string userId);
 
-        // оновлення додаткових даних (кількість людей, рейтинг)
-        Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating);
+        // оновлення додаткових даних (кількість людей, рейтинг, нотатки)
+        Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes);
 
         // переключити статус улюбленої подорожі
         Task<bool> ToggleFavoriteAsync(int tripId, string userId);
+
         Task<Trip> GetTripDetailsAsync(int tripId);
     }
 }

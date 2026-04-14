@@ -14,9 +14,8 @@ namespace SmartTrip.Application.Services
     {
         private readonly SmartTripDbContext _context;
         private readonly ITripGeneratorService _tripGeneratorService;
-        private readonly IPackingService _packingService; // Додано сервіс чеклистів
+        private readonly IPackingService _packingService;
 
-        // Додаємо IPackingService в конструктор
         public TripService(SmartTripDbContext context, ITripGeneratorService tripGeneratorService, IPackingService packingService)
         {
             _context = context;
@@ -26,7 +25,6 @@ namespace SmartTrip.Application.Services
 
         public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate)
         {
-            // Add missing columns if they don't exist
             try
             {
                 await _context.Database.ExecuteSqlRawAsync("ALTER TABLE \"Trips\" ADD COLUMN IF NOT EXISTS \"StartingPoint\" text;");
@@ -62,7 +60,7 @@ namespace SmartTrip.Application.Services
             };
 
             _context.Trips.Add(trip);
-            await _context.SaveChangesAsync(); // Тут база генерує trip.Id
+            await _context.SaveChangesAsync();
 
             int totalDays = (endDate.Date - startDate.Date).Days + 1;
 
@@ -81,8 +79,6 @@ namespace SmartTrip.Application.Services
             await _context.SaveChangesAsync();
 
             await _tripGeneratorService.GenerateItineraryAsync(trip.Id);
-
-            // ВИКЛИКАЄМО КОПІЮВАННЯ ДЕФОЛТНОГО СПИСКУ
             await _packingService.InitializeTripListAsync(trip.Id, userId);
 
             return trip.Id;
@@ -116,7 +112,7 @@ namespace SmartTrip.Application.Services
                 .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
         }
 
-        public async Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating)
+        public async Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes)
         {
             var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
             if (trip == null)
@@ -124,6 +120,7 @@ namespace SmartTrip.Application.Services
 
             trip.PeopleCount = peopleCount;
             trip.Rating = rating;
+            trip.Notes = notes;
 
             await _context.SaveChangesAsync();
             return true;
@@ -144,9 +141,9 @@ namespace SmartTrip.Application.Services
         {
             return await _context.Trips
                 .Include(t => t.City)
-                .Include(t => t.TripDays.OrderBy(d => d.DayNumber)) // Беремо дні по порядку
-                    .ThenInclude(d => d.ItineraryItems.OrderBy(i => i.StartTime)) // В кожному дні беремо події по часу
-                        .ThenInclude(i => i.Place) // Для кожної події підтягуємо інформацію про Місце
+                .Include(t => t.TripDays.OrderBy(d => d.DayNumber))
+                    .ThenInclude(d => d.ItineraryItems.OrderBy(i => i.StartTime))
+                        .ThenInclude(i => i.Place)
                 .FirstOrDefaultAsync(t => t.Id == tripId);
         }
     }

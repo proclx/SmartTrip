@@ -20,6 +20,7 @@ namespace SmartTrip.UI.ViewModels
         public int PhotoCount => Photos?.Count ?? 0;
         public bool IsFavorite { get; set; }
         public IEnumerable<SmartTrip.Models.LocalEvent> SuggestedEvents { get; set; } = new List<SmartTrip.Models.LocalEvent>();
+        public string? Notes { get; set; }
     }
 
     public class EditTripViewModel
@@ -34,5 +35,6 @@ namespace SmartTrip.UI.ViewModels
         [Range(1, 5, ErrorMessage = "Рейтинг має бути від 1 до 5")]
         [Display(Name = "Рейтинг")]
         public int? Rating { get; set; }
+        public string? Notes { get; set; }
     }
 }

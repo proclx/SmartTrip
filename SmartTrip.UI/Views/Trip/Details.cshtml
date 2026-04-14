@@ -4,29 +4,29 @@
     ViewData["Title"] = "Деталі подорожі";
 }
 
-<div class="container mt-4">
+<div class="container mt-4 mb-5">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Деталі подорожі</h2>
         <a class="btn btn-secondary" asp-action="Index">Назад до моїх подорожей</a>
     </div>
 
-    <div class="card mb-4">
+    <div class="card mb-4 shadow-sm">
         <div class="card-body">
-            <h4 class="card-title">@Model.City</h4>
+            <h4 class="card-title text-primary">@Model.City</h4>
             <p class="mb-1"><strong>Початок:</strong> @Model.StartDate.ToString("dd.MM.yyyy")</p>
             <p class="mb-1"><strong>Кінець:</strong> @Model.EndDate.ToString("dd.MM.yyyy")</p>
             <p class="mb-1"><strong>Кількість людей:</strong> @Model.PeopleCount</p>
             <p class="mb-1"><strong>Рейтинг:</strong> @((Model.Rating.HasValue) ? Model.Rating.Value.ToString() : "не обрано")</p>
 
-            <div class="d-flex gap-2 mb-3">
-                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Змінити дані подорожі</a>
+            <div class="d-flex flex-wrap gap-2 mb-3 mt-3">
+                <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id"><i class="bi bi-pencil-square"></i> Редагувати дані</a>
                 @{
                     var shareUrl = Url.Action("Details", "Trip", new { id = Model.Id }, Context.Request.Scheme);
                     var message = $"Моя подорож: {Model.City} ({Model.StartDate:dd.MM.yyyy} - {Model.EndDate:dd.MM.yyyy})";
                     var instaText = $"Моя подорож: {Model.City} ({Model.StartDate:dd.MM.yyyy} - {Model.EndDate:dd.MM.yyyy}). Переглянь тут: {shareUrl}";
                 }
-                <a class="btn btn-outline-primary" href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(shareUrl)&quote=@Uri.EscapeDataString(message)" target="_blank" rel="noopener noreferrer">Поділитися на Facebook</a>
-                <button type="button" class="btn btn-outline-info" onclick="shareInstagram()">Поділитися в Instagram</button>
+                <a class="btn btn-outline-primary" href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(shareUrl)&quote=@Uri.EscapeDataString(message)" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i> Facebook</a>
+                <button type="button" class="btn btn-outline-info" onclick="shareInstagram()"><i class="bi bi-instagram"></i> Instagram</button>
             </div>
             <script>
                 function shareInstagram() {
@@ -48,25 +48,37 @@
         </div>
     </div>
 
-    <h5>Фотографії</h5>
+    @if (!string.IsNullOrWhiteSpace(Model.Notes))
+    {
+        <div class="card shadow-sm border-warning mb-4">
+            <div class="card-header bg-warning bg-opacity-10 text-dark fw-bold border-warning">
+                <i class="bi bi-safe text-warning me-2"></i> Приватні нотатки (Сейф)
+            </div>
+            <div class="card-body bg-light">
+                <p class="card-text mb-0" style="white-space: pre-wrap; font-family: monospace; font-size: 1.05rem;">@Model.Notes</p>
+            </div>
+        </div>
+    }
+
+    <h5 class="mt-4"><i class="bi bi-images text-secondary"></i> Фотографії</h5>
     @if (Model.Photos == null || !Model.Photos.Any())
     {
-        <p><em>Фотографії не додані</em></p>
+        <div class="alert alert-light border text-muted"><em>Фотографії ще не додані.</em></div>
     }
     else
     {
-        <div class="row row-cols-2 row-cols-md-4 g-3 mb-3">
+        <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
             @foreach (var photo in Model.Photos)
             {
                 <div class="col">
-                    <div class="card h-100">
-                        <img src="@photo.FilePath" class="img-fluid rounded" style="height: 180px; object-fit: cover;" />
-                        <div class="card-body p-2">
+                    <div class="card h-100 shadow-sm border-0">
+                        <img src="@photo.FilePath" class="card-img-top rounded-top" style="height: 180px; object-fit: cover;" />
+                        <div class="card-body p-2 bg-light rounded-bottom">
                             <form asp-action="DeletePhoto" method="post" class="d-grid">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="tripId" value="@Model.Id" />
                                 <input type="hidden" name="photoId" value="@photo.Id" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Видалити</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i> Видалити</button>
                             </form>
                         </div>
                     </div>
@@ -77,23 +89,23 @@
 
     @if (Model.SuggestedEvents != null && Model.SuggestedEvents.Any())
     {
-        <div class="mt-5">
-            <h3>🎉 Події та фестивалі під час вашої подорожі</h3>
+        <div class="mt-5 mb-4">
+            <h3><i class="bi bi-calendar-heart text-danger"></i> Події та фестивалі під час вашої подорожі</h3>
             <p class="text-muted">Ми знайшли кілька цікавих подій у місті @Model.City на ваші дати.</p>
 
-            <div class="row mt-3">
+            <div class="row mt-3 g-3">
                 @foreach (var ev in Model.SuggestedEvents)
                 {
-                    <div class="col-md-4 mb-3">
-                        <div class="card h-100 shadow-sm">
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm border-0">
                             @if (!string.IsNullOrEmpty(ev.ImageUrl))
                             {
-                                <img src="@ev.ImageUrl" class="card-img-top" alt="@ev.Title" style="height: 150px; object-fit: cover;">
+                                <img src="@ev.ImageUrl" class="card-img-top" alt="@ev.Title" style="height: 160px; object-fit: cover;">
                             }
                             <div class="card-body d-flex flex-column">
-                                <h5 class="card-title">@ev.Title</h5>
-                                <p class="card-text text-muted small">@ev.Description</p>
-                                <p class="card-text">
+                                <h5 class="card-title fw-bold">@ev.Title</h5>
+                                <p class="card-text text-muted small flex-grow-1">@ev.Description</p>
+                                <p class="card-text text-primary fw-bold mb-3">
                                     <i class="bi bi-calendar-event"></i> @ev.EventDate.ToShortDateString()
                                 </p>
                                 <a href="@ev.LocationUrl" target="_blank" class="btn btn-outline-primary mt-auto">Деталі / Квитки</a>
@@ -104,5 +116,4 @@
             </div>
         </div>
     }
-
 </div>

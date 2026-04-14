@@ -38,5 +38,6 @@ namespace SmartTrip.Models
         public List<Photo> Photos { get; set; } = new();
 
         public List<TripPackingItem> PackingItems { get; set; } = new();
+        public string? Notes { get; set; } // Нотатки до подорожі
     }
 }
