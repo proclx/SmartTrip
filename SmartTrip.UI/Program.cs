@@ -35,6 +35,11 @@ try
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ITripService, TripService>();
     builder.Services.AddHttpClient<ITripGeneratorService, TripGeneratorService>();
+    builder.Services.AddHttpClient<SmartTrip.Application.Interfaces.IEventDiscoveryService, SmartTrip.Application.Services.EventDiscoveryService>(client =>
+    {
+        client.BaseAddress = new Uri("https://app.ticketmaster.com/");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
 
     //gallery
     builder.Services.AddScoped<IGalleryService, GalleryService>();

@@ -19,6 +19,7 @@ namespace SmartTrip.UI.ViewModels
         public List<TripPhotoViewModel>? Photos { get; set; }
         public int PhotoCount => Photos?.Count ?? 0;
         public bool IsFavorite { get; set; }
+        public IEnumerable<SmartTrip.Models.LocalEvent> SuggestedEvents { get; set; } = new List<SmartTrip.Models.LocalEvent>();
     }
 
     public class EditTripViewModel

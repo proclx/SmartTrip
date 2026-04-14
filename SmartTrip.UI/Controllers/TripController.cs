@@ -22,13 +22,15 @@ namespace SmartTrip.UI.Controllers
         private readonly IGalleryService _galleryService;
         private readonly UserManager<User> _userManager;
         private readonly IPackingService _packingService;
+        private readonly IEventDiscoveryService _eventDiscoveryService; // Додано
 
-        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService)
+        public TripController(ITripService tripService, IGalleryService galleryService, UserManager<User> userManager, IPackingService packingService, IEventDiscoveryService eventDiscoveryService) // Змінено
         {
             _tripService = tripService;
             _galleryService = galleryService;
             _userManager = userManager;
             _packingService = packingService;
+            _eventDiscoveryService = eventDiscoveryService; // Змінено
         }
 
         [HttpGet]
@@ -93,6 +95,13 @@ namespace SmartTrip.UI.Controllers
             var trip = await _tripService.GetTripByIdAsync(id, userId);
             if (trip == null) return NotFound();
 
+            // Отримуємо події
+            var suggestedEvents = await _eventDiscoveryService.GetEventsAsync(
+                trip.CityId,
+                trip.City.Name,
+                trip.StartDate,
+                trip.EndDate);
+
             var model = new TripViewModel
             {
                 Id = trip.Id,
@@ -102,7 +111,8 @@ namespace SmartTrip.UI.Controllers
                 PeopleCount = trip.PeopleCount,
                 Rating = trip.Rating,
                 IsFavorite = trip.IsFavorite,
-                Photos = trip.Photos?.Select(p => new TripPhotoViewModel { Id = p.Id, FilePath = p.FilePath }).ToList()
+                Photos = trip.Photos?.Select(p => new TripPhotoViewModel { Id = p.Id, FilePath = p.FilePath }).ToList(),
+                SuggestedEvents = suggestedEvents // Додано
             };
 
             return View(model);
