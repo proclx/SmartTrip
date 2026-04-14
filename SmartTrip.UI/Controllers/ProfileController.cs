@@ -103,6 +103,42 @@ namespace SmartTrip.UI.Controllers
             return RedirectToAction("Index");
         }
 
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View(new ChangePasswordViewModel());
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _profileService.ChangePasswordAsync(userId!, model.CurrentPassword, model.NewPassword);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+
+            var updatedUser = await _profileService.GetUserProfileAsync(userId!);
+            if (updatedUser != null)
+            {
+                await _signInManager.RefreshSignInAsync(updatedUser);
+            }
+
+            TempData["SuccessMessage"] = "Пароль було успішно змінено.";
+            return RedirectToAction("Index");
+        }
+
         [HttpPost]
         public async Task<IActionResult> DeleteImage()
         {

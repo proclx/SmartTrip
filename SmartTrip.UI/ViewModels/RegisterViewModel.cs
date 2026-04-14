@@ -19,6 +19,7 @@ namespace SmartTrip.UI.ViewModels
         [Required(ErrorMessage = "Введіть пароль")]
         [DataType(DataType.Password)]
         [StringLength(100, ErrorMessage = "Пароль має містити мінімум {2} символів.", MinimumLength = 6)]
+        [RegularExpression("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d]).+$", ErrorMessage = "Пароль має містити мінімум 6 символів, одну велику літеру, одну маленьку літеру, цифру та спеціальний символ.")]
         [Display(Name = "Пароль")]
         public string Password { get; set; } = string.Empty;
 

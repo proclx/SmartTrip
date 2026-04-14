@@ -120,6 +120,17 @@ namespace SmartTrip.Application.Services
             }
         }
 
+        public async Task<IdentityResult> ChangePasswordAsync(string userId, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return IdentityResult.Failed(new IdentityError { Description = "Користувача не знайдено." });
+            }
+
+            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        }
+
         public async Task<bool> DeleteProfileImageAsync(string userId)
         {
             var user = await _userManager.FindByIdAsync(userId);

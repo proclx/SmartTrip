@@ -1,5 +1,6 @@
-using SmartTrip.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using SmartTrip.Models;
 
 namespace SmartTrip.Application.Interfaces
 {
@@ -10,6 +11,9 @@ namespace SmartTrip.Application.Interfaces
 
         // Оновити дані профіля (ім'я, прізвище, емейл)
         Task<bool> UpdateUserProfileAsync(string userId, string firstName, string lastName, string email);
+
+        // Змінити пароль користувача
+        Task<IdentityResult> ChangePasswordAsync(string userId, string currentPassword, string newPassword);
 
         // Завантажити фото профіля
         Task<bool> UploadProfileImageAsync(string userId, IFormFile imageFile);
