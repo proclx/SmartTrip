@@ -21,5 +21,8 @@ namespace SmartTrip.UI.ViewModels
         [DataType(DataType.Date)]
         [Display(Name = "Дата завершення")]
         public DateTime EndDate { get; set; } = DateTime.Today.AddDays(3);
+
+        [Display(Name = "Коментар")]
+        public string? Notes { get; set; }
     }
 }

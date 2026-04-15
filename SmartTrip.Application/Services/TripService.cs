@@ -23,7 +23,7 @@ namespace SmartTrip.Application.Services
             _packingService = packingService;
         }
 
-        public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate)
+        public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate, string? notes)
         {
             try
             {
@@ -56,7 +56,8 @@ namespace SmartTrip.Application.Services
                 StartDate = startDate.ToUniversalTime(),
                 EndDate = endDate.ToUniversalTime(),
                 CreatedAt = DateTime.UtcNow,
-                StartingPoint = startingPoint
+                StartingPoint = startingPoint,
+                Notes = notes
             };
 
             _context.Trips.Add(trip);

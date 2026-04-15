@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartTrip.Data;
 using SmartTrip.Models;
+using System;
+using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -58,6 +60,32 @@ namespace SmartTrip.UI.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View(dreamPlace);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PlanTrip(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+            var dreamPlace = await _context.DreamPlaces.FirstOrDefaultAsync(m => m.Id == id && m.UserId == userId);
+
+            if (dreamPlace == null) return NotFound();
+
+            var notesParts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(dreamPlace.Description))
+            {
+                notesParts.Add($"Опис: {dreamPlace.Description}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dreamPlace.LocationInfo))
+            {
+                notesParts.Add($"Локація: {dreamPlace.LocationInfo}");
+            }
+
+            var notes = notesParts.Count > 0 ? string.Join(Environment.NewLine, notesParts) : null;
+
+            return RedirectToAction("Create", "Trip", new { destinationName = dreamPlace.Name, notes });
         }
 
         public async Task<IActionResult> Edit(int? id)

@@ -34,14 +34,18 @@ namespace SmartTrip.UI.Controllers
         }
 
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string? destinationName, string? notes)
         {
-            return View(new CreateTripViewModel());
+            return View(new CreateTripViewModel
+            {
+                DestinationName = destinationName ?? string.Empty,
+                Notes = notes
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateTripViewModel model)
+        public async Task<IActionResult> CreatePost(CreateTripViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -54,7 +58,7 @@ namespace SmartTrip.UI.Controllers
                 return Unauthorized();
             }
 
-            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartingPoint, model.StartDate, model.EndDate);
+            var newTripId = await _tripService.CreateTripAsync(userId, model.DestinationName, model.StartingPoint, model.StartDate, model.EndDate, model.Notes);
 
             return RedirectToAction("Itinerary", new { id = newTripId });
         }

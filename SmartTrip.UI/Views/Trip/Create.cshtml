@@ -10,7 +10,7 @@
                 <div class="card-body p-5">
                     <h2 class="text-center mb-4">Куди вирушаємо? ✈️</h2>
 
-                    <form method="post" asp-action="Create">
+                    <form method="post" asp-action="CreatePost">
                         @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
@@ -37,6 +37,14 @@
                                 <input asp-for="EndDate" class="form-control" />
                                 <span asp-validation-for="EndDate" class="text-danger"></span>
                             </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Notes" class="form-label fw-bold text-warning">
+                                <i class="bi bi-safe"></i> Коментар
+                            </label>
+                            <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Додайте коментар до подорожі..."></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
                         </div>
 
                         <div class="d-grid mt-4">
