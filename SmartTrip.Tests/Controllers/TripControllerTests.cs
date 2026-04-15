@@ -97,5 +97,18 @@ namespace SmartTrip.Tests.Controllers
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
+
+        [Fact]
+        public void Create_Get_PrefillsDestinationAndNotes()
+        {
+            // Act
+            var result = _controller.Create("Budapest", "Опис: Test");
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<CreateTripViewModel>(viewResult.ViewData.Model);
+            Assert.Equal("Budapest", model.DestinationName);
+            Assert.Equal("Опис: Test", model.Notes);
+        }
     }
 }
