@@ -4,6 +4,7 @@ using SmartTrip.Application.Interfaces;
 using SmartTrip.Application.Services;
 using SmartTrip.Data;
 using SmartTrip.Models;
+using System;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -11,78 +12,96 @@ namespace SmartTrip.Tests.Services
 {
     public class TripServiceTests
     {
-        [Fact]
-        public async Task UpdateTripAsync_ShouldUpdateNotes_WhenTripExists()
+        private SmartTripDbContext GetInMemoryDbContext()
         {
-            // 1. ARRANGE (Підготовка)
-            // Налаштовуємо "фейкову" базу даних у пам'яті
             var options = new DbContextOptionsBuilder<SmartTripDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_UpdateNotes")
+                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options;
 
-            using (var context = new SmartTripDbContext(options))
-            {
-                // Додаємо тестову подорож у пам'ять
-                context.Trips.Add(new Trip
-                {
-                    Id = 1,
-                    UserId = "user-123",
-                    CityId = 1,
-                    PeopleCount = 1
-                });
-                await context.SaveChangesAsync();
-            }
+            return new SmartTripDbContext(options);
+        }
 
-            // Створюємо "заглушки" (Mocks) для інших сервісів, які вимагає конструктор
-            var mockGeneratorService = new Mock<ITripGeneratorService>();
-            var mockPackingService = new Mock<IPackingService>();
-
-            using (var context = new SmartTripDbContext(options))
-            {
-                var tripService = new TripService(context, mockGeneratorService.Object, mockPackingService.Object);
-
-                // 2. ACT (Виконання)
-                // Намагаємося оновити подорож: ставимо 3 людини, рейтинг 5 і нові нотатки
-                var result = await tripService.UpdateTripAsync(
-                    tripId: 1,
-                    userId: "user-123",
-                    peopleCount: 3,
-                    rating: 5,
-                    notes: "Мій супер секретний пароль: 1234");
-
-                // 3. ASSERT (Перевірка)
-                Assert.True(result); // Метод має повернути true
-
-                // Дістаємо подорож з бази і перевіряємо, чи змінилися дані
-                var updatedTrip = await context.Trips.FindAsync(1);
-                Assert.NotNull(updatedTrip);
-                Assert.Equal("Мій супер секретний пароль: 1234", updatedTrip.Notes);
-                Assert.Equal(3, updatedTrip.PeopleCount);
-                Assert.Equal(5, updatedTrip.Rating);
-            }
+        private TripService CreateTripService(SmartTripDbContext context)
+        {
+            var tripGeneratorServiceMock = new Mock<ITripGeneratorService>();
+            var packingServiceMock = new Mock<IPackingService>();
+            return new TripService(context, tripGeneratorServiceMock.Object, packingServiceMock.Object);
         }
 
         [Fact]
-        public async Task UpdateTripAsync_ShouldReturnFalse_WhenTripDoesNotExist()
+        public async Task UpdateItineraryItemAsync_ShouldUpdateItem_WhenItemExists()
         {
-            // 1. ARRANGE
-            var options = new DbContextOptionsBuilder<SmartTripDbContext>()
-                .UseInMemoryDatabase(databaseName: "TestDb_TripNotFound")
-                .Options;
+            var context = GetInMemoryDbContext();
+            
+            var item = new ItineraryItem 
+            { 
+                Id = 1, 
+                Notes = "Стара назва",
+                StartTime = new TimeSpan(10, 0, 0),
+                EndTime = new TimeSpan(11, 0, 0)
+            };
+            context.ItineraryItems.Add(item);
+            await context.SaveChangesAsync();
 
-            var mockGeneratorService = new Mock<ITripGeneratorService>();
-            var mockPackingService = new Mock<IPackingService>();
+            var tripService = CreateTripService(context);
 
-            using (var context = new SmartTripDbContext(options))
-            {
-                var tripService = new TripService(context, mockGeneratorService.Object, mockPackingService.Object);
+            var result = await tripService.UpdateItineraryItemAsync(
+                itemId: 1, 
+                newTitle: "Нова назва", 
+                newDescription: "Новий опис", 
+                newTime: new TimeSpan(12, 0, 0));
 
-                // 2. ACT (Пробуємо оновити подорож з неіснуючим ID = 99)
-                var result = await tripService.UpdateTripAsync(99, "user-123", 2, null, "Нотатка");
+            Assert.True(result);
+            
+            var updatedItem = await context.ItineraryItems.FindAsync(1);
+            Assert.NotNull(updatedItem);
+            Assert.Equal("Нова назва", updatedItem.Notes);
+            Assert.Equal("Новий опис", updatedItem.Notes);
+            Assert.Equal(new TimeSpan(12, 0, 0), updatedItem.StartTime);
+        }
 
-                // 3. ASSERT
-                Assert.False(result); // Має повернути false, бо подорожі немає
-            }
+        [Fact]
+        public async Task UpdateItineraryItemAsync_ShouldReturnFalse_WhenItemDoesNotExist()
+        {
+            var context = GetInMemoryDbContext();
+            var tripService = CreateTripService(context);
+
+            var result = await tripService.UpdateItineraryItemAsync(
+                itemId: 99, 
+                newTitle: "Нова назва", 
+                newDescription: "Новий опис", 
+                newTime: new TimeSpan(12, 0, 0));
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public async Task DeleteItineraryItemAsync_ShouldRemoveItem_WhenItemExists()
+        {
+            var context = GetInMemoryDbContext();
+            var item = new ItineraryItem { Id = 1, Notes = "Локація для видалення" };
+            context.ItineraryItems.Add(item);
+            await context.SaveChangesAsync();
+
+            var tripService = CreateTripService(context);
+
+            var result = await tripService.DeleteItineraryItemAsync(1);
+
+            Assert.True(result);
+            
+            var deletedItem = await context.ItineraryItems.FindAsync(1);
+            Assert.Null(deletedItem);
+        }
+
+        [Fact]
+        public async Task DeleteItineraryItemAsync_ShouldReturnFalse_WhenItemDoesNotExist()
+        {
+            var context = GetInMemoryDbContext();
+            var tripService = CreateTripService(context);
+
+            var result = await tripService.DeleteItineraryItemAsync(99);
+
+            Assert.False(result);
         }
     }
 }
