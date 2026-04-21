@@ -1,11 +1,11 @@
 ﻿using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using SmartTrip.Application.Interfaces;
 using SmartTrip.Data;
 using SmartTrip.Infrastructure;
-using SmartTrip.Models;
 using SmartTrip.Models;
 using SmartTrip.Models.Enum;
 
@@ -27,17 +27,32 @@ namespace SmartTrip.Application.Services
         private readonly SmartTripDbContext _context;
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
+        private readonly IMemoryCache _memoryCache;
+        private readonly int _tripGenerationCacheMinutes;
 
-        public TripGeneratorService(SmartTripDbContext context, HttpClient httpClient, IConfiguration configuration)
+        private class CachedTripGenerationData
+        {
+            public List<GeminiRouteItem> Items { get; set; } = new();
+            public string? RouteToDestination { get; set; }
+            public string? RouteBack { get; set; }
+        }
+
+        public TripGeneratorService(
+            SmartTripDbContext context,
+            HttpClient httpClient,
+            IConfiguration configuration,
+            IMemoryCache memoryCache)
         {
             _context = context;
             _httpClient = httpClient;
+            _memoryCache = memoryCache;
 
             _httpClient.Timeout = TimeSpan.FromMinutes(3);
 
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "SmartTripApp/1.0");
 
             _apiKey = configuration["GoogleAI:ApiKey"] ?? throw new Exception("API ключ не знайдено!");
+            _tripGenerationCacheMinutes = configuration.GetValue<int>("CacheSettings:TripGenerationCacheMinutes", 60);
         }
 
         public async Task GenerateItineraryAsync(int tripId)
@@ -51,6 +66,13 @@ namespace SmartTrip.Application.Services
 
             int totalDays = trip.TripDays.Count;
             string cityName = trip.City.Name;
+            string tripCacheKey = BuildTripGenerationCacheKey(cityName, totalDays, trip.StartingPoint);
+
+            if (_memoryCache.TryGetValue(tripCacheKey, out CachedTripGenerationData? cachedData) && cachedData != null)
+            {
+                await ApplyGeneratedDataToTripAsync(trip, cachedData.Items, cachedData.RouteToDestination, cachedData.RouteBack);
+                return;
+            }
 
             // 2. Формуємо строгий промпт для Gemini
             string prompt = $@"
@@ -107,69 +129,24 @@ namespace SmartTrip.Application.Services
 
                 if (generatedItems == null) return;
 
-                // 5. Зберігаємо місця та події в БАЗУ ДАНИХ!
-                foreach (var item in generatedItems)
-                {
-                    // Шукаємо, чи ми вже зберігали таке місце раніше
-                    var place = await _context.Places
-                        .FirstOrDefaultAsync(p => p.Name == item.PlaceName && p.CityId == trip.CityId);
-
-                    if (place == null)
-                    {
-                        PlaceType parsedType = PlaceType.Attraction; 
-                        Enum.TryParse<PlaceType>(item.Category, true, out parsedType);
-
-                        place = new Place
-                        {
-                            CityId = trip.CityId,
-                            Name = item.PlaceName,
-                            Type = parsedType, 
-                            Rating = 4.5       
-                        };
-                        _context.Places.Add(place);
-                        await _context.SaveChangesAsync(); 
-                    }
-
-                    // Знаходимо правильний день для цієї події
-                    var tripDay = trip.TripDays.FirstOrDefault(d => d.DayNumber == item.DayIndex);
-
-                    if (tripDay != null)
-                    {
-                        var itineraryItem = new ItineraryItem
-                        {
-                            TripDayId = tripDay.Id,
-                            PlaceId = place.Id,
-                            StartTime = TimeSpan.Parse(item.StartTime),
-                            EndTime = TimeSpan.Parse(item.EndTime),
-                            Notes = item.Notes
-                        };
-                        _context.ItineraryItems.Add(itineraryItem);
-                    }
-                }
-
-                await _context.SaveChangesAsync();
+                string? routeToDestination = null;
+                string? routeBack = null;
 
                 // Generate routes if starting point is provided
                 if (!string.IsNullOrEmpty(trip.StartingPoint))
                 {
-                    // Reload trip with itinerary items and places
-                    trip = await _context.Trips
-                        .Include(t => t.TripDays)
-                            .ThenInclude(d => d.ItineraryItems)
-                                .ThenInclude(i => i.Place)
-                        .FirstOrDefaultAsync(t => t.Id == tripId);
-
-                    if (trip != null)
-                    {
-                        // Route to destination
-                        trip.RouteToDestination = await GenerateRouteAsync(trip.StartingPoint, trip.City.Name);
-
-                        // Route back
-                        trip.RouteBack = await GenerateRouteAsync(trip.City.Name, trip.StartingPoint);
-
-                        await _context.SaveChangesAsync();
-                    }
+                    routeToDestination = await GenerateRouteAsync(trip.StartingPoint, trip.City.Name);
+                    routeBack = await GenerateRouteAsync(trip.City.Name, trip.StartingPoint);
                 }
+
+                await ApplyGeneratedDataToTripAsync(trip, generatedItems, routeToDestination, routeBack);
+
+                _memoryCache.Set(tripCacheKey, new CachedTripGenerationData
+                {
+                    Items = generatedItems,
+                    RouteToDestination = routeToDestination,
+                    RouteBack = routeBack
+                }, TimeSpan.FromMinutes(_tripGenerationCacheMinutes));
             }
             catch (Exception ex)
             {
@@ -224,6 +201,79 @@ namespace SmartTrip.Application.Services
             {
                 return null;
             }
+        }
+
+        private static string BuildTripGenerationCacheKey(string cityName, int totalDays, string? startingPoint)
+        {
+            string normalizedCity = cityName.Trim().ToLowerInvariant();
+            string normalizedStart = (startingPoint ?? string.Empty).Trim().ToLowerInvariant();
+            return $"trip-generation:{normalizedCity}:{totalDays}:{normalizedStart}";
+        }
+
+        private async Task ApplyGeneratedDataToTripAsync(Trip trip, List<GeminiRouteItem> generatedItems, string? routeToDestination, string? routeBack)
+        {
+            var tripDayIds = trip.TripDays.Select(d => d.Id).ToList();
+            var existingItems = await _context.ItineraryItems
+                .Where(i => tripDayIds.Contains(i.TripDayId))
+                .ToListAsync();
+
+            if (existingItems.Any())
+            {
+                _context.ItineraryItems.RemoveRange(existingItems);
+            }
+
+            var cityPlaces = await _context.Places
+                .Where(p => p.CityId == trip.CityId)
+                .ToListAsync();
+
+            var placesByName = cityPlaces
+                .GroupBy(p => p.Name.ToLower())
+                .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var item in generatedItems)
+            {
+                var normalizedPlaceName = item.PlaceName.Trim().ToLowerInvariant();
+
+                if (!placesByName.TryGetValue(normalizedPlaceName, out var place))
+                {
+                    PlaceType parsedType = PlaceType.Attraction;
+                    Enum.TryParse(item.Category, true, out parsedType);
+
+                    place = new Place
+                    {
+                        CityId = trip.CityId,
+                        Name = item.PlaceName,
+                        Type = parsedType,
+                        Rating = 4.5
+                    };
+
+                    _context.Places.Add(place);
+                    await _context.SaveChangesAsync();
+                    placesByName[normalizedPlaceName] = place;
+                }
+
+                var tripDay = trip.TripDays.FirstOrDefault(d => d.DayNumber == item.DayIndex);
+                if (tripDay == null)
+                {
+                    continue;
+                }
+
+                var itineraryItem = new ItineraryItem
+                {
+                    TripDayId = tripDay.Id,
+                    PlaceId = place.Id,
+                    StartTime = TimeSpan.Parse(item.StartTime),
+                    EndTime = TimeSpan.Parse(item.EndTime),
+                    Notes = item.Notes
+                };
+
+                _context.ItineraryItems.Add(itineraryItem);
+            }
+
+            trip.RouteToDestination = routeToDestination;
+            trip.RouteBack = routeBack;
+
+            await _context.SaveChangesAsync();
         }
     }
 }

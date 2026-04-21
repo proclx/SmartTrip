@@ -4,6 +4,8 @@ using SmartTrip.Application.Interfaces;
 using SmartTrip.Application.Services;
 using SmartTrip.Data;
 using SmartTrip.Models;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
 using Xunit;
@@ -25,7 +27,13 @@ namespace SmartTrip.Tests.Services
         {
             var tripGeneratorServiceMock = new Mock<ITripGeneratorService>();
             var packingServiceMock = new Mock<IPackingService>();
-            return new TripService(context, tripGeneratorServiceMock.Object, packingServiceMock.Object);
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["CacheSettings:ReferenceDataCacheMinutes"] = "60"
+            }).Build();
+
+            return new TripService(context, tripGeneratorServiceMock.Object, packingServiceMock.Object, memoryCache, configuration);
         }
 
         [Fact]

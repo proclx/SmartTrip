@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using SmartTrip.Data;
 using SmartTrip.Models;
 using SmartTrip.Application.Interfaces;
@@ -15,12 +17,21 @@ namespace SmartTrip.Application.Services
         private readonly SmartTripDbContext _context;
         private readonly ITripGeneratorService _tripGeneratorService;
         private readonly IPackingService _packingService;
+        private readonly IMemoryCache _memoryCache;
+        private readonly int _referenceDataCacheMinutes;
 
-        public TripService(SmartTripDbContext context, ITripGeneratorService tripGeneratorService, IPackingService packingService)
+        public TripService(
+            SmartTripDbContext context,
+            ITripGeneratorService tripGeneratorService,
+            IPackingService packingService,
+            IMemoryCache memoryCache,
+            IConfiguration configuration)
         {
             _context = context;
             _tripGeneratorService = tripGeneratorService;
             _packingService = packingService;
+            _memoryCache = memoryCache;
+            _referenceDataCacheMinutes = configuration.GetValue<int>("CacheSettings:ReferenceDataCacheMinutes", 60);
         }
 
         public async Task<int> CreateTripAsync(string userId, string destinationName, string startingPoint, DateTime startDate, DateTime endDate, string? notes)
@@ -34,25 +45,41 @@ namespace SmartTrip.Application.Services
             }
             catch { }
 
-            var city = await _context.Cities
-                .FirstOrDefaultAsync(c => c.Name.ToLower() == destinationName.ToLower());
+            string normalizedDestination = destinationName.Trim().ToLowerInvariant();
+            string cityCacheKey = $"city:{normalizedDestination}";
 
-            if (city == null)
+            int cityId;
+
+            if (_memoryCache.TryGetValue(cityCacheKey, out int cachedCityId))
             {
-                city = new City
-                {
-                    Name = destinationName,
-                    Country = "Не вказано"
-                };
+                cityId = cachedCityId;
+            }
+            else
+            {
+                var city = await _context.Cities
+                    .FirstOrDefaultAsync(c => c.Name.ToLower() == normalizedDestination);
 
-                _context.Cities.Add(city);
-                await _context.SaveChangesAsync();
+                if (city == null)
+                {
+                    city = new City
+                    {
+                        Name = destinationName,
+                        Country = "Не вказано"
+                    };
+
+                    _context.Cities.Add(city);
+                    await _context.SaveChangesAsync();
+                }
+
+                cityId = city.Id;
+
+                _memoryCache.Set(cityCacheKey, cityId, TimeSpan.FromMinutes(_referenceDataCacheMinutes));
             }
 
             var trip = new Trip
             {
                 UserId = userId,
-                CityId = city.Id,
+                CityId = cityId,
                 StartDate = startDate.ToUniversalTime(),
                 EndDate = endDate.ToUniversalTime(),
                 CreatedAt = DateTime.UtcNow,

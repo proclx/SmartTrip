@@ -6,6 +6,7 @@ using SmartTrip.Application.Interfaces;
 using SmartTrip.Application.Services;
 using Microsoft.AspNetCore.Identity;
 using QuestPDF;
+using SmartTrip.UI.Middleware;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -42,6 +43,7 @@ try
 
     // Add services to the container.
     builder.Services.AddControllersWithViews();
+    builder.Services.AddMemoryCache();
     builder.Services.AddScoped<IAuthService, AuthService>();
     builder.Services.AddScoped<ITripService, TripService>();
     builder.Services.AddHttpClient<ITripGeneratorService, TripGeneratorService>();
@@ -90,7 +92,10 @@ try
 
     app.UseRouting();
 
+    app.UseMiddleware<RequestTimingMiddleware>();
+
     app.UseAuthentication();
+    app.UseMiddleware<RequestLoggingMiddleware>();
     app.UseAuthorization();
 
     app.MapControllerRoute(
