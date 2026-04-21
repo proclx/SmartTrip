@@ -1,0 +1,59 @@
+﻿@model IEnumerable<SmartTrip.UI.ViewModels.TripViewModel>
+
+@{
+    ViewData["Title"] = "Архів подорожей";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Архів подорожей</h2>
+        <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary" asp-action="Index">Всі подорожі</a>
+            <a class="btn btn-primary" asp-action="Create">Додати нову подорож</a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-secondary">Ваш архів порожній. Відправляйте сюди минулі подорожі, щоб звільнити головний екран.</div>
+    }
+    else
+    {
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            @foreach (var trip in Model)
+            {
+                <div class="col">
+                    <div class="card h-100 shadow-sm bg-light">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title text-muted">@trip.City (Архів)</h5>
+                                @if (trip.IsFavorite)
+                                {
+                                    <span class="text-danger" title="Улюблена">
+                                        <i class="fas fa-heart"></i>
+                                    </span>
+                                }
+                            </div>
+                            <p class="card-text mb-1"><strong>Період:</strong> @trip.StartDate.ToString("dd.MM.yyyy") - @trip.EndDate.ToString("dd.MM.yyyy")</p>
+                            <p class="card-text mb-1"><strong>Людей:</strong> @trip.PeopleCount</p>
+                            <p class="card-text mb-3"><strong>Фото:</strong> @(trip.PhotoCount > 0 ? trip.PhotoCount.ToString() : "не додано")</p>
+
+                            <div class="d-flex gap-2">
+                                <form asp-action="ToggleArchive" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@trip.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="btn btn-sm btn-warning" title="Повернути до активних">
+                                        Повернути з архіву
+                                    </button>
+                                </form>
+
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

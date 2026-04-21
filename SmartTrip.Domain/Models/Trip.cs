@@ -39,5 +39,6 @@ namespace SmartTrip.Models
 
         public List<TripPackingItem> PackingItems { get; set; } = new();
         public string? Notes { get; set; } // Нотатки до подорожі
+        public bool IsArchived { get; set; } = false; // За замовчуванням подорож не в архіві
     }
 }

@@ -8,6 +8,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Мої подорожі</h2>
         <div class="btn-group" role="group">
+            <a class="btn btn-outline-secondary" asp-action="Archived">Архів</a>
             <a class="btn btn-outline-primary" asp-action="Favorites">Улюблені подорожі</a>
             <a class="btn btn-primary" asp-action="Create">Додати нову подорож</a>
         </div>
@@ -15,7 +16,7 @@
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info">Тут будуть ваші подорожі. Додайте першу подорож.</div>
+        <div class="alert alert-info">Тут будуть ваші активні подорожі. Додайте першу подорож.</div>
     }
     else
     {
@@ -30,17 +31,29 @@
                             <p class="card-text mb-1"><strong>Людей:</strong> @trip.PeopleCount</p>
                             <p class="card-text mb-1"><strong>Рейтинг:</strong> @((trip.Rating.HasValue) ? trip.Rating.Value.ToString() : "не обрано")</p>
                             <p class="card-text mb-1"><strong>Фото:</strong> @(trip.PhotoCount > 0 ? trip.PhotoCount.ToString() : "не додано")</p>
-                            <form asp-action="ToggleFavorite" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@trip.Id" />
-                                <button type="submit" class="btn btn-sm @(trip.IsFavorite ? "btn-danger" : "btn-outline-danger")" title="Улюблена подорож">
-                                    <i class="fas fa-heart"></i> @(trip.IsFavorite ? "В обраному" : "Улюблена")
-                                </button>
-                            </form>
+
+                            <div class="mb-3 mt-2">
+                                <form asp-action="ToggleFavorite" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@trip.Id" />
+                                    <button type="submit" class="btn btn-sm @(trip.IsFavorite ? "btn-danger" : "btn-outline-danger")" title="Улюблена подорож">
+                                        <i class="fas fa-heart"></i> @(trip.IsFavorite ? "В обраному" : "Улюблена")
+                                    </button>
+                                </form>
+
+                                <form asp-action="ToggleArchive" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@trip.Id" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Відправити в архів">
+                                        В архів
+                                    </button>
+                                </form>
+                            </div>
 
                             @if (trip.Photos != null && trip.Photos.Any())
                             {
-                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                <div class="d-flex flex-wrap gap-2 mb-3">
                                     @foreach (var photo in trip.Photos.Take(6))
                                     {
                                         <img src="@photo.FilePath" class="img-thumbnail" style="width: 70px; height: 70px; object-fit: cover;" />
@@ -48,12 +61,12 @@
                                 </div>
                             }
 
-                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
-                            <a class="btn btn-sm btn-outline-primary" asp-action="Itinerary" asp-route-id="@trip.Id">Розклад</a>
-                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@trip.Id">Редагувати</a>
-
-                            <button type="button" class="btn btn-sm btn-outline-success" onclick="openPackingModal(@trip.Id)">🎒 Чеклист</button>
-                            <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
+                            <div class="d-flex flex-wrap gap-1 mt-auto">
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
+                                <a class="btn btn-sm btn-outline-primary" asp-action="Itinerary" asp-route-id="@trip.Id">Розклад</a>
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@trip.Id">Редагувати</a>
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="openPackingModal(@trip.Id)">🎒 Чеклист</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -71,23 +84,18 @@
 
 @section Scripts {
     <script>
-        // Відкриває модалку і завантажує вміст
         function openPackingModal(tripId) {
             $('#packingListModalContent').html('<div class="p-5 text-center"><div class="spinner-border text-primary"></div></div>');
             var myModal = new bootstrap.Modal(document.getElementById('packingListModal'));
             myModal.show();
-
             $.get('/Trip/GetPackingListModal?tripId=' + tripId, function (data) {
                 $('#packingListModalContent').html(data);
             });
         }
 
-        // Перемикає статус галочки
         function toggleItem(itemId, checkbox) {
             var labelSpan = $(checkbox).siblings('span');
-
             $.post('/Trip/TogglePackingItem', { itemId: itemId }, function () {
-                // Візуально перекреслюємо текст, якщо галочка стоїть
                 if(checkbox.checked) {
                     labelSpan.addClass('text-decoration-line-through text-muted');
                 } else {
@@ -96,36 +104,31 @@
             });
         }
 
-        // Додає нову річ
         function addTripItem(e, tripId) {
             e.preventDefault();
             var name = $('#newItemName').val();
             var cat = $('#newItemCategory').val();
-
             $.post('/Trip/AddTripPackingItem', { tripId: tripId, name: name, category: cat }, function (data) {
-                $('#packingListModalContent').html(data); // Оновлюємо вміст модалки
+                $('#packingListModalContent').html(data);
             });
         }
 
-        // Оновити з шаблону
         function syncList(tripId) {
             $.post('/Trip/SyncPackingList', { tripId: tripId }, function (data) {
                 $('#packingListModalContent').html(data);
             });
         }
 
-        // Скинути до дефолтного
         function resetList(tripId) {
             $.post('/Trip/ResetPackingList', { tripId: tripId }, function (data) {
                 $('#packingListModalContent').html(data);
             });
         }
 
-        // Видаляє конкретну річ з чеклисту подорожі
         function deleteTripItem(itemId, tripId) {
             if(confirm('Ви впевнені, що хочете видалити цю річ?')) {
                 $.post('/Trip/DeleteTripPackingItem', { itemId: itemId, tripId: tripId }, function (data) {
-                    $('#packingListModalContent').html(data); // Оновлюємо вміст модалки
+                    $('#packingListModalContent').html(data);
                 });
             }
         }

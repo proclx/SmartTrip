@@ -117,7 +117,7 @@ namespace SmartTrip.Application.Services
             return await _context.Trips
                 .Include(t => t.City)
                 .Include(t => t.Photos)
-                .Where(t => t.UserId == userId)
+                .Where(t => t.UserId == userId && !t.IsArchived)
                 .OrderByDescending(t => t.StartDate)
                 .ToListAsync();
         }
@@ -204,6 +204,26 @@ namespace SmartTrip.Application.Services
             if (item == null) return false;
 
             _context.ItineraryItems.Remove(item);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<IEnumerable<Trip>> GetArchivedTripsAsync(string userId)
+        {
+            return await _context.Trips
+                .Include(t => t.City)
+                .Include(t => t.Photos)
+                .Where(t => t.UserId == userId && t.IsArchived)
+                .OrderByDescending(t => t.StartDate)
+                .ToListAsync();
+        }
+
+        public async Task<bool> ToggleArchiveAsync(int tripId, string userId)
+        {
+            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+            if (trip == null) return false;
+
+            trip.IsArchived = !trip.IsArchived;
             await _context.SaveChangesAsync();
             return true;
         }

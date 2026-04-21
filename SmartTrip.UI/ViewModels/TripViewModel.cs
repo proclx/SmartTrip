@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SmartTrip.UI.ViewModels
 {
+
     public class TripPhotoViewModel
     {
         public int Id { get; set; }
@@ -21,6 +22,7 @@ namespace SmartTrip.UI.ViewModels
         public bool IsFavorite { get; set; }
         public IEnumerable<SmartTrip.Models.LocalEvent> SuggestedEvents { get; set; } = new List<SmartTrip.Models.LocalEvent>();
         public string? Notes { get; set; }
+        public bool IsArchived { get; set; }
     }
 
     public class EditTripViewModel

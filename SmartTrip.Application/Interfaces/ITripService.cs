@@ -29,5 +29,7 @@ namespace SmartTrip.Application.Interfaces
         Task<ItineraryItem?> GetItineraryItemByIdAsync(int itemId);
         Task<bool> UpdateItineraryItemAsync(int itemId, string newTitle, string newDescription, TimeSpan? newTime);
         Task<bool> DeleteItineraryItemAsync(int itemId);
+        Task<IEnumerable<Trip>> GetArchivedTripsAsync(string userId);
+        Task<bool> ToggleArchiveAsync(int tripId, string userId);
     }
 }

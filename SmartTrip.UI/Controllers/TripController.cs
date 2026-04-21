@@ -358,6 +358,46 @@ namespace SmartTrip.UI.Controllers
             return View(model);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Archived()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var trips = await _tripService.GetArchivedTripsAsync(userId);
+            var model = trips.Select(t => new TripViewModel
+            {
+                Id = t.Id,
+                City = t.City?.Name ?? "-",
+                StartDate = t.StartDate,
+                EndDate = t.EndDate,
+                PeopleCount = t.PeopleCount,
+                Rating = t.Rating,
+                IsFavorite = t.IsFavorite,
+                IsArchived = t.IsArchived, // Передаємо статус
+                Photos = t.Photos?.Select(p => new TripPhotoViewModel { Id = p.Id, FilePath = p.FilePath }).ToList()
+            }).ToList();
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleArchive(int id, string returnUrl)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            await _tripService.ToggleArchiveAsync(id, userId);
+
+            // Повертаємо користувача на ту сторінку, звідки він натиснув кнопку
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
+            return RedirectToAction("Index");
+        }
+
         // --- МЕТОДИ ДЛЯ ЧЕКЛИСТУ ---
 
         [HttpGet]
