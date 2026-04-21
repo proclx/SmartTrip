@@ -144,6 +144,7 @@ namespace SmartTrip.UI.Controllers
                     Date = d.Date,
                     Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
                     {
+                        Id = i.Id, 
                         PlaceName = i.Place?.Name ?? "Невідоме місце",
                         PlaceType = i.Place?.Type.ToString() ?? "",
                         Rating = i.Place?.Rating,
@@ -419,6 +420,28 @@ namespace SmartTrip.UI.Controllers
 
             await _packingService.DeleteTripItemAsync(itemId, userId);
             return RedirectToAction(nameof(GetPackingListModal), new { tripId = tripId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateItineraryItem(int id, string title, string description)
+        {
+            var success = await _tripService.UpdateItineraryItemAsync(id, title, description, null); // Передайте час, якщо додали
+            if (!success)
+            {
+                return BadRequest("Не вдалося оновити запис.");
+            }
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteItineraryItem(int id)
+        {
+            var success = await _tripService.DeleteItineraryItemAsync(id);
+            if (!success)
+            {
+                return BadRequest("Не вдалося видалити запис.");
+            }
+            return Ok();
         }
     }
 }

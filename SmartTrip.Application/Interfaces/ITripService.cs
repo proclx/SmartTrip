@@ -25,5 +25,9 @@ namespace SmartTrip.Application.Interfaces
         Task<bool> ToggleFavoriteAsync(int tripId, string userId);
 
         Task<Trip> GetTripDetailsAsync(int tripId);
+
+        Task<ItineraryItem?> GetItineraryItemByIdAsync(int itemId);
+        Task<bool> UpdateItineraryItemAsync(int itemId, string newTitle, string newDescription, TimeSpan? newTime);
+        Task<bool> DeleteItineraryItemAsync(int itemId);
     }
 }

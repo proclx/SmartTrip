@@ -147,5 +147,38 @@ namespace SmartTrip.Application.Services
                         .ThenInclude(i => i.Place)
                 .FirstOrDefaultAsync(t => t.Id == tripId);
         }
+
+        public async Task<ItineraryItem?> GetItineraryItemByIdAsync(int itemId)
+        {
+            return await _context.ItineraryItems // Або як називається ваш DbSet для елементів розкладу
+                .FirstOrDefaultAsync(i => i.Id == itemId);
+        }
+
+        public async Task<bool> UpdateItineraryItemAsync(int itemId, string newTitle, string newDescription, TimeSpan? newTime)
+        {
+            var item = await _context.ItineraryItems.FindAsync(itemId);
+            if (item == null) return false;
+
+            item.Notes = newDescription;
+
+            if (newTime.HasValue)
+            {
+                item.StartTime = newTime.Value;
+            }
+
+            _context.ItineraryItems.Update(item);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteItineraryItemAsync(int itemId)
+        {
+            var item = await _context.ItineraryItems.FindAsync(itemId);
+            if (item == null) return false;
+
+            _context.ItineraryItems.Remove(item);
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

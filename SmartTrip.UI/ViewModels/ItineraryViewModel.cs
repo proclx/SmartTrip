@@ -25,6 +25,8 @@ namespace SmartTrip.UI.ViewModels
 
     public class ItineraryItemViewModel
     {
+        public int Id { get; set; } 
+        
         public string PlaceName { get; set; } = string.Empty;
         public string PlaceType { get; set; } = string.Empty; // "Hotel" | "Restaurant" | "Attraction"
         public double? Rating { get; set; }

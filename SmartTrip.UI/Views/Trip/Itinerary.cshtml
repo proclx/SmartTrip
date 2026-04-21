@@ -94,6 +94,10 @@
                                                     <small class="text-warning fw-bold">★ @((item.Rating ?? 0).ToString("0.0"))</small>
                                                 </div>
                                             </div>
+                                            <div class="mt-3">
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(@item.Id, '@item.PlaceName', '@item.Notes')">Редагувати</button>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(@item.Id)">Видалити</button>
+                                            </div>
                                         </li>
                                     }
                                 }
@@ -112,3 +116,63 @@
         </div>
     }
 </div>
+
+@* Додайте модалку для редагування *@
+<div class="modal fade" id="editItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редагувати пункт розкладу</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editItemId" />
+                <div class="mb-3">
+                    <label class="form-label">Назва</label>
+                    <input type="text" class="form-control" id="editItemTitle" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Опис</label>
+                    <textarea class="form-control" id="editItemDesc"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" onclick="saveItemChanges()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, title, desc) {
+            $('#editItemId').val(id);
+            $('#editItemTitle').val(title);
+            $('#editItemDesc').val(desc);
+            var myModal = new bootstrap.Modal(document.getElementById('editItemModal'));
+            myModal.show();
+        }
+
+        function saveItemChanges() {
+            var id = $('#editItemId').val();
+            var title = $('#editItemTitle').val();
+            var desc = $('#editItemDesc').val();
+
+            $.post('/Trip/UpdateItineraryItem', { id: id, title: title, description: desc }, function () {
+                // Оновлюємо UI (або робимо location.reload())
+                $('#item-' + id + ' .item-title').text(title);
+                $('#item-' + id + ' .item-desc').text(desc);
+                bootstrap.Modal.getInstance(document.getElementById('editItemModal')).hide();
+            });
+        }
+
+        function deleteItem(id) {
+            if (confirm('Ви впевнені?')) {
+                $.post('/Trip/DeleteItineraryItem', { id: id }, function () {
+                    $('#item-' + id).slideUp(function(){ $(this).remove(); });
+                });
+            }
+        }
+    </script>
+}
