@@ -61,6 +61,9 @@
                                     <a asp-action="ChangePassword" asp-controller="Profile" class="btn btn-warning text-white">
                                         <i class="bi bi-key-fill"></i> Змінити пароль
                                     </a>
+                                    <a href="@Url.Action("ExportProfilePdf", "Profile")" class="btn btn-success">
+                                        <i class="fas fa-file-pdf"></i> Завантажити PDF
+                                    </a>
                                 </div>
                             </div>
                         </div>
