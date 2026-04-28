@@ -38,6 +38,19 @@ namespace SmartTrip.Application.Services
             return item;
         }
 
+        public async Task UpdateDefaultItemAsync(int itemId, string name, string category, string userId)
+        {
+            var item = await _context.DefaultPackingItems
+                .FirstOrDefaultAsync(x => x.Id == itemId && x.UserId == userId);
+
+            if (item != null)
+            {
+                item.Name = name;
+                item.Category = string.IsNullOrWhiteSpace(category) ? "Інше" : category;
+                await _context.SaveChangesAsync();
+            }
+        }
+
         public async Task DeleteDefaultItemAsync(int itemId, string userId)
         {
             var item = await _context.DefaultPackingItems

@@ -7,6 +7,7 @@ namespace SmartTrip.Application.Interfaces
         // --- ДЕФОЛТНИЙ СПИСОК ---
         Task<IEnumerable<DefaultPackingItem>> GetDefaultItemsAsync(string userId);
         Task<DefaultPackingItem> AddDefaultItemAsync(string userId, string name, string category);
+        Task UpdateDefaultItemAsync(int itemId, string name, string category, string userId);
         Task DeleteDefaultItemAsync(int itemId, string userId);
 
         // --- СПИСОК ДЛЯ ПОДОРОЖІ ---
