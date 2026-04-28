@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using SmartTrip.UI.Filters; // ДОДАНО: підключення простору імен фільтра
 
 namespace SmartTrip.UI.Controllers
 {
@@ -34,6 +35,14 @@ namespace SmartTrip.UI.Controllers
             _eventDiscoveryService = eventDiscoveryService;
         }
 
+        // ДОДАНО: Метод для відображення помилки Rate Limit
+        [AllowAnonymous]
+        public IActionResult RateLimit()
+        {
+            return View();
+        }
+
+        [RateLimit(maxRequests: 5, minutes: 1)] // ДОДАНО: Обмеження до 5 запитів на хвилину
         [HttpGet]
         public IActionResult Create(string? destinationName, string? notes)
         {
@@ -44,6 +53,7 @@ namespace SmartTrip.UI.Controllers
             });
         }
 
+        [RateLimit(maxRequests: 3, minutes: 1)] // ДОДАНО: Обмеження до 3 запитів на хвилину
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreatePost(CreateTripViewModel model)
@@ -64,6 +74,7 @@ namespace SmartTrip.UI.Controllers
             return RedirectToAction("Itinerary", new { id = newTripId });
         }
 
+        [RateLimit(maxRequests: 10, minutes: 1)] // ДОДАНО: Обмеження до 10 запитів на хвилину
         [HttpGet]
         public async Task<IActionResult> Index()
         {
