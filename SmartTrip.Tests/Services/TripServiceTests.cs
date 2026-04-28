@@ -111,5 +111,47 @@ namespace SmartTrip.Tests.Services
 
             Assert.False(result);
         }
+
+        //[Fact]
+        //public async Task ApplyRainModeToDayAsync_ShouldReplaceItems_WhenAIGeneratesAlternatives()
+        //{
+        //    // Arrange
+        //    var dbContext = GetInMemoryDbContext();
+            
+        //    // Mock AI Generator
+        //    var mockGenerator = new Mock<ITripGeneratorService>();
+        //    mockGenerator
+        //        .Setup(g => g.AdaptForRainModeAsync(It.IsAny<string>(), It.IsAny<List<ItineraryItem>>()))
+        //        .ReturnsAsync(new List<ItineraryItem> 
+        //        { 
+        //            new ItineraryItem { Title = "National Art Museum (Indoor)", Time = new TimeSpan(10, 0, 0) } 
+        //        });
+
+        //    // Note: Ensure the mock generator is passed into the TripService constructor here
+        //    var tripService = new TripService(dbContext, mockGenerator.Object);
+
+        //    var trip = new Trip { Id = 10, UserId = "user123", DestinationName = "Lviv" };
+        //    var tripDay = new TripDay { Id = 5, TripId = 10 };
+        //    var outdoorItem = new ItineraryItem { Id = 1, TripDayId = 5, Title = "City Center Walking Tour" };
+
+        //    tripDay.ItineraryItems = new List<ItineraryItem> { outdoorItem };
+        //    trip.TripDays = new List<TripDay> { tripDay };
+
+        //    dbContext.Trips.Add(trip);
+        //    dbContext.TripDays.Add(tripDay);
+        //    dbContext.ItineraryItems.Add(outdoorItem);
+        //    await dbContext.SaveChangesAsync();
+
+        //    // Act
+        //    var result = await tripService.ApplyRainModeToDayAsync(5, "user123");
+
+        //    // Assert
+        //    Assert.True(result);
+            
+        //    // Verify old outdoor item was replaced
+        //    var newItems = await dbContext.ItineraryItems.Where(i => i.TripDayId == 5).ToListAsync();
+        //    Assert.Single(newItems);
+        //    Assert.Contains("Indoor", newItems.First().Title);
+        //}
     }
 }

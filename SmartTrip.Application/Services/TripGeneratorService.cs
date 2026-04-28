@@ -275,5 +275,131 @@ namespace SmartTrip.Application.Services
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<ItineraryItem>> AdaptForRainModeAsync(string destinationCity, List<ItineraryItem> originalItems)
+        {
+            if (originalItems == null || originalItems.Count == 0)
+            {
+                return new List<ItineraryItem>();
+            }
+
+            // Формуємо контекст з поточним розкладом для ШІ
+            var originalSchedule = originalItems.Select(i => new 
+            {
+                PlaceName = i.Place != null ? i.Place.Name : "Невідоме місце",
+                StartTime = i.StartTime.ToString(@"hh\:mm\:ss"),
+                EndTime = i.EndTime.ToString(@"hh\:mm\:ss"),
+                Notes = i.Notes
+            });
+
+            string prompt = $@"
+                Ти — експертний гід. У місті {destinationCity} почався сильний дощ (Rain Mode).
+                Ось поточний розклад подій на день:
+                {JsonSerializer.Serialize(originalSchedule)}
+                
+                Твоє завдання:
+                1. Замінити всі вуличні локації (парки, площі, пішохідні зони) на цікаві КРИТІ альтернативи (музеї, галереї, ТРЦ, криті ринки тощо) в цьому ж місті.
+                2. Прийоми їжі (ресторани, кафе) залишити без змін та у той же час.
+                3. Поверни ТІЛЬКИ чистий масив JSON (без форматування markdown, без ```json на початку). 
+                Формат кожного об'єкта має бути строго таким:
+                [
+                  {{
+                    ""DayIndex"": 1,
+                    ""PlaceName"": ""Назва закритої локації або ресторану"",
+                    ""Category"": ""Attraction"", // Використовуй строго одне з трьох: ""Hotel"", ""Restaurant"", або ""Attraction""
+                    ""StartTime"": ""10:00:00"",
+                    ""EndTime"": ""12:00:00"",
+                    ""Notes"": ""Короткий опис, що тут робити, і чому це ідеально під час дощу""
+                  }}
+                ]
+            ";
+
+            var requestBody = new
+            {
+                contents = new[] { new { parts = new[] { new { text = prompt } } } }
+            };
+
+            string jsonBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            string cleanApiKey = _apiKey.Trim();
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={cleanApiKey}";
+
+            try
+            {
+                var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode) return null; // ЗМІНЕНО
+
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var aiText = jsonDoc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text").GetString();
+
+                if (string.IsNullOrEmpty(aiText)) return null; // ЗМІНЕНО
+
+                aiText = aiText.Replace("```json", "").Replace("```", "").Trim();
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var generatedItems = JsonSerializer.Deserialize<List<GeminiRouteItem>>(aiText, options);
+
+                if (generatedItems == null || generatedItems.Count == 0) return null; // ЗМІНЕНО
+
+                var newItinerary = new List<ItineraryItem>();
+
+                // Шукаємо CityId
+                int cityId = originalItems.FirstOrDefault(i => i.Place != null)?.Place?.CityId 
+                             ?? await _context.Cities.Where(c => c.Name == destinationCity).Select(c => c.Id).FirstOrDefaultAsync();
+
+                var cityPlaces = await _context.Places
+                    .Where(p => p.CityId == cityId)
+                    .ToDictionaryAsync(p => p.Name.ToLowerInvariant(), p => p);
+
+                foreach (var item in generatedItems)
+                {
+                    var normalizedPlaceName = item.PlaceName.Trim().ToLowerInvariant();
+
+                    if (!cityPlaces.TryGetValue(normalizedPlaceName, out var place))
+                    {
+                        PlaceType parsedType = PlaceType.Attraction;
+                        Enum.TryParse(item.Category, true, out parsedType);
+
+                        place = new Place
+                        {
+                            CityId = cityId > 0 ? cityId : throw new Exception("CityNotFound"),
+                            Name = item.PlaceName,
+                            Type = parsedType,
+                            Rating = 4.5
+                        };
+
+                        _context.Places.Add(place);
+                        await _context.SaveChangesAsync();
+                        cityPlaces[normalizedPlaceName] = place;
+                    }
+
+                    var itineraryItem = new ItineraryItem
+                    {
+                        PlaceId = place.Id,
+                        StartTime = TimeSpan.Parse(item.StartTime),
+                        EndTime = TimeSpan.Parse(item.EndTime),
+                        Notes = item.Notes
+                        // Увага: TripDayId встановлюється вище по ієрархії виклику в TripService
+                    };
+
+                    newItinerary.Add(itineraryItem);
+                }
+
+                return newItinerary;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка режиму Rain Mode: {ex.Message}");
+                // ЗМІНЕНО: повертаємо null замість originalItems
+                return null; 
+            }
+        }
     }
 }

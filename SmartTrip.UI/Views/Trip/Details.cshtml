@@ -20,6 +20,7 @@
 
             <div class="d-flex flex-wrap gap-2 mb-3 mt-3">
                 <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id"><i class="bi bi-pencil-square"></i> Редагувати дані</a>
+                <a class="btn btn-info" asp-action="Itinerary" asp-route-id="@Model.Id"><i class="bi bi-list-task"></i> Розклад (Маршрут)</a>
                 @{
                     var shareUrl = Url.Action("Details", "Trip", new { id = Model.Id }, Context.Request.Scheme);
                     var message = $"Моя подорож: {Model.City} ({Model.StartDate:dd.MM.yyyy} - {Model.EndDate:dd.MM.yyyy})";

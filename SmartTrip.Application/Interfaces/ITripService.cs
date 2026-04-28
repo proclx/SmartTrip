@@ -31,5 +31,6 @@ namespace SmartTrip.Application.Interfaces
         Task<bool> DeleteItineraryItemAsync(int itemId);
         Task<IEnumerable<Trip>> GetArchivedTripsAsync(string userId);
         Task<bool> ToggleArchiveAsync(int tripId, string userId);
+        Task<bool> ApplyRainModeToDayAsync(int tripDayId, string userId);
     }
 }

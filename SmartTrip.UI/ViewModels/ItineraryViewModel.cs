@@ -18,6 +18,7 @@ namespace SmartTrip.UI.ViewModels
 
     public class ItineraryDayViewModel
     {
+        public int Id { get; set; } // ДОДАНО РЯДОК
         public int DayIndex { get; set; }
         public DateTime Date { get; set; }
         public List<ItineraryItemViewModel> Items { get; set; } = new();

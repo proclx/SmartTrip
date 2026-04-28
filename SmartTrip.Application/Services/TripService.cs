@@ -227,5 +227,50 @@ namespace SmartTrip.Application.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        // Add this method to the TripService class
+
+        public async Task<bool> ApplyRainModeToDayAsync(int tripDayId, string userId)
+        {
+            var tripDay = await _context.TripDays
+                .Include(td => td.Trip)
+                    .ThenInclude(t => t.City) // ДОДАНО: підвантажуємо місто
+                .Include(td => td.ItineraryItems)
+                    .ThenInclude(i => i.Place) // ДОДАНО: підвантажуємо місця
+                .FirstOrDefaultAsync(td => td.Id == tripDayId && td.Trip.UserId == userId);
+
+            if (tripDay == null || tripDay.ItineraryItems == null || !tripDay.ItineraryItems.Any())
+            {
+                return false;
+            }
+
+            // Instruct AI to preserve meal times but swap outdoor locations
+            var adaptedItinerary = await _tripGeneratorService.AdaptForRainModeAsync(
+                tripDay.Trip.City?.Name ?? string.Empty,
+                tripDay.ItineraryItems.ToList()
+            );
+
+            // Якщо ШІ повернув помилку (передано null) - скасовуємо 
+            if (adaptedItinerary == null || !adaptedItinerary.Any())
+            {
+                return false; 
+            }
+
+            // Remove old outdoor-heavy schedule
+            _context.ItineraryItems.RemoveRange(tripDay.ItineraryItems);
+            // Фіксуємо видалення перед додаванням нових
+            await _context.SaveChangesAsync();
+
+            // Apply new indoor schedule
+            foreach (var item in adaptedItinerary)
+            {
+                item.Id = 0; 
+                item.TripDayId = tripDayId;
+                _context.ItineraryItems.Add(item);
+            }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

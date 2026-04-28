@@ -65,7 +65,7 @@
                                 {
                                     @foreach (var item in day.Items)
                                     {
-                                        <li class="list-group-item p-4">
+                                        <li class="list-group-item p-4" id="item-@item.Id">
                                             <div class="d-flex w-100 justify-content-between align-items-center">
                                                 <div>
                                                     <h5 class="mb-1 text-dark fw-bold">
@@ -112,6 +112,36 @@
                     </div>
                 }
 
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <h3 class="text-center mb-4">Адаптація до погоди 🌦️</h3>
+                <div class="alert alert-info text-center">
+                    Використовуйте цю функцію, щоб адаптувати свій розклад залежно від погоди у місті призначення.
+                </div>
+
+                @foreach (var day in Model.Days)
+                {
+                    <div class="card shadow-sm mb-4 border-0">
+                        <div class="card-header bg-secondary text-white py-3">
+                            <h5 class="mb-0">
+                                День @day.DayIndex <small class="text-light ms-2">(@day.Date.ToString("dd MMMM, dddd"))</small>
+                            </h5>
+                        </div>
+                        <div class="card-body text-center">
+                            <form asp-controller="Trip" asp-action="ActivateRainMode" method="post" class="d-inline-block">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="tripDayId" value="@day.Id" />
+                                <input type="hidden" name="tripId" value="@Model.TripId" />
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="bi bi-cloud-rain"></i> Адаптувати під дощ (Rain Mode)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
     }

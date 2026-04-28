@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace SmartTrip.UI.Controllers
 {
@@ -140,6 +141,7 @@ namespace SmartTrip.UI.Controllers
                 RouteBack = trip.RouteBack,
                 Days = trip.TripDays.Select(d => new ItineraryDayViewModel
                 {
+                    Id = d.Id, // ДОДАНО РЯДОК
                     DayIndex = d.DayNumber,
                     Date = d.Date,
                     Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
@@ -482,6 +484,31 @@ namespace SmartTrip.UI.Controllers
                 return BadRequest("Не вдалося видалити запис.");
             }
             return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ActivateRainMode(int tripDayId, int tripId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            bool success = await _tripService.ApplyRainModeToDayAsync(tripDayId, userId);
+
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Маршрут успішно адаптовано під дощову погоду (Rain Mode)☀️👉🌧️";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Помилка! Не вдалося знайти альтернативні локації.";
+            }
+
+            // ЗМІНЕНО Details на Itinerary
+            return RedirectToAction(nameof(Itinerary), new { id = tripId });
         }
     }
 }
