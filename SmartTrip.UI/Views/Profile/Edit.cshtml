@@ -65,6 +65,13 @@
                             <span asp-validation-for="Email" class="text-danger form-text"></span>
                         </div>
 
+                        <div class="mb-4">
+                            <label asp-for="About" class="form-label">Про мене</label>
+                            <textarea asp-for="About" class="form-control" rows="4" placeholder="Напишіть кілька слів про себе..."></textarea>
+                            <small class="text-muted d-block mt-2">Максимум 500 символів</small>
+                            <span asp-validation-for="About" class="text-danger form-text"></span>
+                        </div>
+
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save"></i> Зберегти зміни

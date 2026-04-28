@@ -26,7 +26,7 @@ namespace SmartTrip.Application.Services
             return user;
         }
 
-        public async Task<bool> UpdateUserProfileAsync(string userId, string firstName, string lastName, string email)
+        public async Task<bool> UpdateUserProfileAsync(string userId, string firstName, string lastName, string email, string? about = null)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return false;
@@ -36,6 +36,7 @@ namespace SmartTrip.Application.Services
                 // Оновлюємо дані
                 user.FirstName = firstName;
                 user.LastName = lastName;
+                user.About = about;
 
                 var userUpdateResult = await _userManager.UpdateAsync(user);
                 if (!userUpdateResult.Succeeded)

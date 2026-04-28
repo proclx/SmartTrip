@@ -54,6 +54,14 @@
                                     <p class="fs-5">@Model.Email</p>
                                 </div>
 
+                                @if (!string.IsNullOrEmpty(Model.About))
+                                {
+                                    <div class="mb-3">
+                                        <label class="text-muted">Про мене:</label>
+                                        <p class="fs-5 border-start border-primary border-4 ps-3" style="white-space: pre-wrap;">@Model.About</p>
+                                    </div>
+                                }
+
                                 <div class="d-flex gap-2 flex-wrap">
                                     <a href="@Url.Action("Edit", "Profile")" class="btn btn-primary">
                                         <i class="fas fa-edit"></i> Редагувати профіль
@@ -119,12 +127,19 @@
                                                 {
                                                     <li class="list-group-item d-flex justify-content-between align-items-center bg-light border-bottom-0">
                                                         <span>@item.Name</span>
-                                                        <form asp-action="DeleteDefaultItem" asp-controller="Profile" method="post" class="m-0">
-                                                            <input type="hidden" name="itemId" value="@item.Id" />
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Видалити">
-                                                                <i class="bi bi-trash"></i>
+                                                        <div class="d-flex gap-2">
+                                                            <button type="button" class="btn btn-sm btn-outline-primary border-0" title="Редагувати" 
+                                                                data-bs-toggle="modal" data-bs-target="#editModal" 
+                                                                onclick="openEditModal(@item.Id, '@item.Name', '@item.Category')">
+                                                                <i class="bi bi-pencil"></i>
                                                             </button>
-                                                        </form>
+                                                            <form asp-action="DeleteDefaultItem" asp-controller="Profile" method="post" class="m-0">
+                                                                <input type="hidden" name="itemId" value="@item.Id" />
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Видалити">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+                                                            </form>
+                                                        </div>
                                                     </li>
                                                 }
                                             </ul>
@@ -151,6 +166,52 @@
         </div>
     </div>
 </div>
+
+@* МОДАЛЬНЕ ВІКНО ДЛЯ РЕДАГУВАННЯ *@
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalLabel">Редагувати елемент чеклисту</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editForm" asp-action="EditDefaultItem" asp-controller="Profile" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="editItemId" name="itemId" />
+                    
+                    <div class="mb-3">
+                        <label for="editItemName" class="form-label">Назва</label>
+                        <input type="text" class="form-control" id="editItemName" name="name" required />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editItemCategory" class="form-label">Категорія</label>
+                        <select id="editItemCategory" name="category" class="form-select">
+                            <option value="Документи та фінанси">Документи та фінанси</option>
+                            <option value="Одяг та взуття">Одяг та взуття</option>
+                            <option value="Гігієна та косметика">Гігієна та косметика</option>
+                            <option value="Техніка">Техніка</option>
+                            <option value="Аптечка">Аптечка</option>
+                            <option value="Інше">Інше</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="submit" class="btn btn-primary">Зберегти зміни</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(itemId, itemName, itemCategory) {
+        document.getElementById('editItemId').value = itemId;
+        document.getElementById('editItemName').value = itemName;
+        document.getElementById('editItemCategory').value = itemCategory;
+    }
+</script>
 
 <style>
     .profile-image-container {

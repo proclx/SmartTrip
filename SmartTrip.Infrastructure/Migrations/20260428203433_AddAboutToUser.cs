@@ -5,7 +5,7 @@
 namespace SmartTrip.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTripArchive : Migration
+    public partial class AddAboutToUser : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,6 +16,12 @@ namespace SmartTrip.Infrastructure.Migrations
                 type: "boolean",
                 nullable: false,
                 defaultValue: false);
+
+            migrationBuilder.AddColumn<string>(
+                name: "About",
+                table: "AspNetUsers",
+                type: "text",
+                nullable: true);
         }
 
         /// <inheritdoc />
@@ -24,6 +30,10 @@ namespace SmartTrip.Infrastructure.Migrations
             migrationBuilder.DropColumn(
                 name: "IsArchived",
                 table: "Trips");
+
+            migrationBuilder.DropColumn(
+                name: "About",
+                table: "AspNetUsers");
         }
     }
 }

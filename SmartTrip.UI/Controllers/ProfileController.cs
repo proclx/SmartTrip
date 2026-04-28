@@ -43,6 +43,7 @@ namespace SmartTrip.UI.Controllers
                 LastName = user.LastName,
                 Email = user.Email,
                 ProfileImageUrl = user.ProfileImageUrl,
+                About = user.About,
                 DefaultPackingItems = defaultItems // 4. Передаємо у модель
             };
 
@@ -63,7 +64,8 @@ namespace SmartTrip.UI.Controllers
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                ProfileImageUrl = user.ProfileImageUrl
+                ProfileImageUrl = user.ProfileImageUrl,
+                About = user.About
             };
 
             return View(model);
@@ -79,7 +81,7 @@ namespace SmartTrip.UI.Controllers
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var success = await _profileService.UpdateUserProfileAsync(userId!, model.FirstName!, model.LastName!, model.Email!);
+            var success = await _profileService.UpdateUserProfileAsync(userId!, model.FirstName!, model.LastName!, model.Email!, model.About);
 
             if (!success)
             {
@@ -175,6 +177,18 @@ namespace SmartTrip.UI.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             await _packingService.DeleteDefaultItemAsync(itemId, userId!);
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditDefaultItem(int itemId, string name, string category)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return RedirectToAction("Index");
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            await _packingService.UpdateDefaultItemAsync(itemId, name, category, userId!);
 
             return RedirectToAction("Index");
         }

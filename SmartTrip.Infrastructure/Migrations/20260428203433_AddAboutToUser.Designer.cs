@@ -12,8 +12,8 @@ using SmartTrip.Data;
 namespace SmartTrip.Infrastructure.Migrations
 {
     [DbContext(typeof(SmartTripDbContext))]
-    [Migration("20260421223248_AddTripArchive")]
-    partial class AddTripArchive
+    [Migration("20260428203433_AddAboutToUser")]
+    partial class AddAboutToUser
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -453,6 +453,9 @@ namespace SmartTrip.Infrastructure.Migrations
             modelBuilder.Entity("SmartTrip.Models.User", b =>
                 {
                     b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("About")
                         .HasColumnType("text");
 
                     b.Property<int>("AccessFailedCount")

@@ -18,6 +18,10 @@ namespace SmartTrip.UI.ViewModels
 
         public string? ProfileImageUrl { get; set; }
 
+        [StringLength(500, ErrorMessage = "Максимум 500 символів")]
+        [Display(Name = "Про мене")]
+        public string? About { get; set; }
+
         [Display(Name = "Завантажити нове фото")]
         public IFormFile? ImageFile { get; set; }
         public IEnumerable<SmartTrip.Models.DefaultPackingItem> DefaultPackingItems { get; set; } = new List<SmartTrip.Models.DefaultPackingItem>();
