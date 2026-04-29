@@ -40,10 +40,10 @@ namespace SmartTrip.Tests.Services
         public async Task UpdateItineraryItemAsync_ShouldUpdateItem_WhenItemExists()
         {
             var context = GetInMemoryDbContext();
-            
-            var item = new ItineraryItem 
-            { 
-                Id = 1, 
+
+            var item = new ItineraryItem
+            {
+                Id = 1,
                 Notes = "Стара назва",
                 StartTime = new TimeSpan(10, 0, 0),
                 EndTime = new TimeSpan(11, 0, 0)
@@ -54,13 +54,13 @@ namespace SmartTrip.Tests.Services
             var tripService = CreateTripService(context);
 
             var result = await tripService.UpdateItineraryItemAsync(
-                itemId: 1, 
-                newTitle: "Нова назва", 
-                newDescription: "Новий опис", 
+                itemId: 1,
+                newTitle: "Нова назва",
+                newDescription: "Новий опис",
                 newTime: new TimeSpan(12, 0, 0));
 
             Assert.True(result);
-            
+
             var updatedItem = await context.ItineraryItems.FindAsync(1);
             Assert.NotNull(updatedItem);
             Assert.Equal("Нова назва", updatedItem.Notes);
@@ -75,9 +75,9 @@ namespace SmartTrip.Tests.Services
             var tripService = CreateTripService(context);
 
             var result = await tripService.UpdateItineraryItemAsync(
-                itemId: 99, 
-                newTitle: "Нова назва", 
-                newDescription: "Новий опис", 
+                itemId: 99,
+                newTitle: "Нова назва",
+                newDescription: "Новий опис",
                 newTime: new TimeSpan(12, 0, 0));
 
             Assert.False(result);
@@ -96,7 +96,7 @@ namespace SmartTrip.Tests.Services
             var result = await tripService.DeleteItineraryItemAsync(1);
 
             Assert.True(result);
-            
+
             var deletedItem = await context.ItineraryItems.FindAsync(1);
             Assert.Null(deletedItem);
         }
@@ -112,46 +112,53 @@ namespace SmartTrip.Tests.Services
             Assert.False(result);
         }
 
-        //[Fact]
-        //public async Task ApplyRainModeToDayAsync_ShouldReplaceItems_WhenAIGeneratesAlternatives()
-        //{
-        //    // Arrange
-        //    var dbContext = GetInMemoryDbContext();
-            
-        //    // Mock AI Generator
-        //    var mockGenerator = new Mock<ITripGeneratorService>();
-        //    mockGenerator
-        //        .Setup(g => g.AdaptForRainModeAsync(It.IsAny<string>(), It.IsAny<List<ItineraryItem>>()))
-        //        .ReturnsAsync(new List<ItineraryItem> 
-        //        { 
-        //            new ItineraryItem { Title = "National Art Museum (Indoor)", Time = new TimeSpan(10, 0, 0) } 
-        //        });
+        [Fact]
+        public async Task ApplyRainModeToDayAsync_ShouldReplaceItems_WhenAIGeneratesAlternatives()
+        {
+            // Arrange
+            var dbContext = GetInMemoryDbContext();
 
-        //    // Note: Ensure the mock generator is passed into the TripService constructor here
-        //    var tripService = new TripService(dbContext, mockGenerator.Object);
+            // Mock AI Generator
+            var mockGenerator = new Mock<ITripGeneratorService>();
+            mockGenerator
+                .Setup(g => g.AdaptForRainModeAsync(It.IsAny<string>(), It.IsAny<List<ItineraryItem>>()))
+                .ReturnsAsync(new List<ItineraryItem>
+                {
+                    new ItineraryItem { Notes = "National Art Museum (Indoor)", StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(11, 0, 0) }
+                });
 
-        //    var trip = new Trip { Id = 10, UserId = "user123", DestinationName = "Lviv" };
-        //    var tripDay = new TripDay { Id = 5, TripId = 10 };
-        //    var outdoorItem = new ItineraryItem { Id = 1, TripDayId = 5, Title = "City Center Walking Tour" };
+            var packingServiceMock = new Mock<IPackingService>();
+            var memoryCache = new MemoryCache(new MemoryCacheOptions());
+            var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["CacheSettings:ReferenceDataCacheMinutes"] = "60"
+            }).Build();
 
-        //    tripDay.ItineraryItems = new List<ItineraryItem> { outdoorItem };
-        //    trip.TripDays = new List<TripDay> { tripDay };
+            // Pass all required dependencies to TripService constructor
+            var tripService = new TripService(dbContext, mockGenerator.Object, packingServiceMock.Object, memoryCache, configuration);
 
-        //    dbContext.Trips.Add(trip);
-        //    dbContext.TripDays.Add(tripDay);
-        //    dbContext.ItineraryItems.Add(outdoorItem);
-        //    await dbContext.SaveChangesAsync();
+            var trip = new Trip { Id = 10, UserId = "user123" };
+            var tripDay = new TripDay { Id = 5, TripId = 10 };
+            var outdoorItem = new ItineraryItem { Id = 1, TripDayId = 5, Notes = "City Center Walking Tour" };
 
-        //    // Act
-        //    var result = await tripService.ApplyRainModeToDayAsync(5, "user123");
+            tripDay.ItineraryItems = new List<ItineraryItem> { outdoorItem };
+            trip.TripDays = new List<TripDay> { tripDay };
 
-        //    // Assert
-        //    Assert.True(result);
-            
-        //    // Verify old outdoor item was replaced
-        //    var newItems = await dbContext.ItineraryItems.Where(i => i.TripDayId == 5).ToListAsync();
-        //    Assert.Single(newItems);
-        //    Assert.Contains("Indoor", newItems.First().Title);
-        //}
+            dbContext.Trips.Add(trip);
+            dbContext.TripDays.Add(tripDay);
+            dbContext.ItineraryItems.Add(outdoorItem);
+            await dbContext.SaveChangesAsync();
+
+            // Act
+            var result = await tripService.ApplyRainModeToDayAsync(5, "user123");
+
+            // Assert
+            Assert.True(result);
+
+            // Verify old outdoor item was replaced
+            var newItems = await dbContext.ItineraryItems.Where(i => i.TripDayId == 5).ToListAsync();
+            Assert.Single(newItems);
+            Assert.Contains("Indoor", newItems.First().Notes);
+        }
     }
 }
