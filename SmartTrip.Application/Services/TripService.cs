@@ -140,15 +140,49 @@ namespace SmartTrip.Application.Services
                 .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
         }
 
-        public async Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes)
+        public async Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes, DateTime startDate, DateTime endDate)
         {
-            var trip = await _context.Trips.FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
-            if (trip == null)
-                return false;
+            var trip = await _context.Trips
+                .Include(t => t.TripDays)
+                .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+
+            if (trip == null) return false;
 
             trip.PeopleCount = peopleCount;
             trip.Rating = rating;
             trip.Notes = notes;
+
+            if (trip.StartDate.Date != startDate.Date || trip.EndDate.Date != endDate.Date)
+            {
+                trip.StartDate = startDate.ToUniversalTime();
+                trip.EndDate = endDate.ToUniversalTime();
+
+                int newTotalDays = (endDate.Date - startDate.Date).Days + 1;
+                var existingDays = trip.TripDays.OrderBy(d => d.DayNumber).ToList();
+
+                for (int i = 0; i < Math.Min(newTotalDays, existingDays.Count); i++)
+                {
+                    existingDays[i].Date = startDate.AddDays(i).ToUniversalTime();
+                }
+
+                if (newTotalDays > existingDays.Count)
+                {
+                    for (int i = existingDays.Count; i < newTotalDays; i++)
+                    {
+                        _context.TripDays.Add(new TripDay
+                        {
+                            TripId = trip.Id,
+                            Date = startDate.AddDays(i).ToUniversalTime(),
+                            DayNumber = i + 1
+                        });
+                    }
+                }
+                else if (newTotalDays < existingDays.Count)
+                {
+                    var daysToRemove = existingDays.Skip(newTotalDays).ToList();
+                    _context.TripDays.RemoveRange(daysToRemove);
+                }
+            }
 
             await _context.SaveChangesAsync();
             return true;
@@ -271,6 +305,68 @@ namespace SmartTrip.Application.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<int> CloneTripAsync(int tripId, string userId)
+        {
+            // 1. Отримуємо оригінальну подорож з усіма днями та пунктами маршруту
+            var originalTrip = await _context.Trips
+                .Include(t => t.TripDays)
+                    .ThenInclude(d => d.ItineraryItems)
+                .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+
+            if (originalTrip == null) return 0;
+
+            // 2. Створюємо копію подорожі
+            var clonedTrip = new Trip
+            {
+                UserId = userId,
+                CityId = originalTrip.CityId,
+                StartingPoint = originalTrip.StartingPoint,
+                StartDate = originalTrip.StartDate,
+                EndDate = originalTrip.EndDate,
+                PeopleCount = originalTrip.PeopleCount,
+                Notes = originalTrip.Notes,
+                CreatedAt = DateTime.UtcNow,
+                IsFavorite = false,
+                IsArchived = false
+            };
+
+            _context.Trips.Add(clonedTrip);
+            await _context.SaveChangesAsync(); // Отримуємо новий Id для clonedTrip
+
+            // 3. Копіюємо дні та пункти маршруту
+            foreach (var oldDay in originalTrip.TripDays.OrderBy(d => d.DayNumber))
+            {
+                var newDay = new TripDay
+                {
+                    TripId = clonedTrip.Id,
+                    Date = oldDay.Date,
+                    DayNumber = oldDay.DayNumber
+                };
+                _context.TripDays.Add(newDay);
+                await _context.SaveChangesAsync(); // Отримуємо Id нового дня для ItineraryItems
+
+                foreach (var oldItem in oldDay.ItineraryItems)
+                {
+                    var newItem = new ItineraryItem
+                    {
+                        TripDayId = newDay.Id,
+                        PlaceId = oldItem.PlaceId,
+                        StartTime = oldItem.StartTime,
+                        EndTime = oldItem.EndTime,
+                        Notes = oldItem.Notes
+                    };
+                    _context.ItineraryItems.Add(newItem);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            // 4. Ініціалізуємо чеклист для нової подорожі 
+            await _packingService.InitializeTripListAsync(clonedTrip.Id, userId);
+
+            return clonedTrip.Id;
         }
     }
 }

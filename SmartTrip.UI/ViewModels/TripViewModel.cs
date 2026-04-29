@@ -38,5 +38,17 @@ namespace SmartTrip.UI.ViewModels
         [Display(Name = "Рейтинг")]
         public int? Rating { get; set; }
         public string? Notes { get; set; }
+
+        [Required(ErrorMessage = "Вкажіть дату початку")]
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)] 
+        [Display(Name = "Дата початку")]
+        public DateTime StartDate { get; set; }
+
+        [Required(ErrorMessage = "Вкажіть дату завершення")]
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)] 
+        [Display(Name = "Дата завершення")]
+        public DateTime EndDate { get; set; }
     }
 }

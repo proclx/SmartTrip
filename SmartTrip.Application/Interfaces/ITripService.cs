@@ -19,7 +19,7 @@ namespace SmartTrip.Application.Interfaces
         Task<Trip?> GetTripByIdAsync(int tripId, string userId);
 
         // оновлення додаткових даних (кількість людей, рейтинг, нотатки)
-        Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes);
+        Task<bool> UpdateTripAsync(int tripId, string userId, int peopleCount, int? rating, string? notes, DateTime startDate, DateTime endDate);
 
         // переключити статус улюбленої подорожі
         Task<bool> ToggleFavoriteAsync(int tripId, string userId);
@@ -32,5 +32,7 @@ namespace SmartTrip.Application.Interfaces
         Task<IEnumerable<Trip>> GetArchivedTripsAsync(string userId);
         Task<bool> ToggleArchiveAsync(int tripId, string userId);
         Task<bool> ApplyRainModeToDayAsync(int tripDayId, string userId);
+
+        Task<int> CloneTripAsync(int tripId, string userId);
     }
 }
