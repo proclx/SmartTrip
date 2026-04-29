@@ -10,12 +10,12 @@ namespace SmartTrip.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "IsArchived",
-                table: "Trips",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            //migrationBuilder.AddColumn<bool>(
+            //    name: "IsArchived",
+            //    table: "Trips",
+            //    type: "boolean",
+            //    nullable: false,
+            //    defaultValue: false);
 
             migrationBuilder.AddColumn<string>(
                 name: "About",

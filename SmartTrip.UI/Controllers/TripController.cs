@@ -269,7 +269,9 @@ namespace SmartTrip.UI.Controllers
                 Id = trip.Id,
                 PeopleCount = trip.PeopleCount,
                 Rating = trip.Rating,
-                Notes = trip.Notes // ДОДАНО: передаємо нотатки для редагування
+                Notes = trip.Notes,
+                StartDate = trip.StartDate,
+                EndDate = trip.EndDate
             };
 
             return View(model);
@@ -277,10 +279,17 @@ namespace SmartTrip.UI.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+
         public async Task<IActionResult> Edit(EditTripViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
+
+            if (model.EndDate < model.StartDate)
+            {
+                ModelState.AddModelError("EndDate", "Дата завершення не може бути раніше дати початку!");
+                return View(model);
+            }
 
             var userId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(userId))
@@ -288,8 +297,15 @@ namespace SmartTrip.UI.Controllers
                 return Unauthorized();
             }
 
-            // ДОДАНО: передаємо model.Notes у сервіс
-            var success = await _tripService.UpdateTripAsync(model.Id, userId, model.PeopleCount, model.Rating, model.Notes);
+            var success = await _tripService.UpdateTripAsync(
+                model.Id,
+                userId,
+                model.PeopleCount,
+                model.Rating,
+                model.Notes,
+                model.StartDate,
+                model.EndDate
+            );
 
             if (!success)
             {
@@ -520,6 +536,24 @@ namespace SmartTrip.UI.Controllers
 
             // ЗМІНЕНО Details на Itinerary
             return RedirectToAction(nameof(Itinerary), new { id = tripId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Clone(int id)
+        {
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var newTripId = await _tripService.CloneTripAsync(id, userId);
+
+            if (newTripId > 0)
+            {
+                // Можна перенаправити або в загальний список, або одразу в редагування нової подорожі
+                return RedirectToAction("Index");
+            }
+
+            return NotFound();
         }
     }
 }

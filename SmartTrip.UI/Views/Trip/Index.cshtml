@@ -49,6 +49,14 @@
                                         В архів
                                     </button>
                                 </form>
+
+                                <form asp-action="Clone" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@trip.Id" />
+                                    <button type="submit" class="btn btn-sm btn-outline-info" title="Зробити копію">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </form>
                             </div>
 
                             @if (trip.Photos != null && trip.Photos.Any())
