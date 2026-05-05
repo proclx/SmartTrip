@@ -23,6 +23,8 @@ namespace SmartTrip.Data
         public DbSet<DefaultPackingItem> DefaultPackingItems { get; set; }
         public DbSet<TripPackingItem> TripPackingItems { get; set; }
 
+        public DbSet<LocalEvent> LocalEvents { get; set; } 
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

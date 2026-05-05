@@ -65,6 +65,11 @@ try
     //email sender
     builder.Services.AddTransient<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender, SmartTrip.Infrastructure.Services.EmailSender>();
 
+    //notification
+    builder.Services.AddSignalR();
+    builder.Services.AddSingleton<SmartTrip.Application.Interfaces.INotificationSender, SmartTrip.UI.Services.SignalRNotificationSender>();
+    builder.Services.AddHostedService<SmartTrip.Application.Services.NotificationBackgroundService>();
+
     var app = builder.Build();
 
     // Configure QuestPDF license
@@ -101,6 +106,8 @@ try
     app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}");
+
+    app.MapHub<SmartTrip.UI.Hubs.NotificationHub>("/notificationHub");
 
     app.Run();
 }
