@@ -64,7 +64,7 @@
                                 <div class="d-flex flex-wrap gap-2 mb-3">
                                     @foreach (var photo in trip.Photos.Take(6))
                                     {
-                                        <img src="@photo.FilePath" class="img-thumbnail" style="width: 70px; height: 70px; object-fit: cover;" />
+                                        <img src="@photo.FilePath" class="img-thumbnail trip-photo-thumb" />
                                     }
                                 </div>
                             }
@@ -73,7 +73,7 @@
                                 <a class="btn btn-sm btn-outline-primary" asp-action="Details" asp-route-id="@trip.Id">Переглянути</a>
                                 <a class="btn btn-sm btn-outline-primary" asp-action="Itinerary" asp-route-id="@trip.Id">Розклад</a>
                                 <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@trip.Id">Редагувати</a>
-                                <button type="button" class="btn btn-sm btn-outline-success" onclick="openPackingModal(@trip.Id)">🎒 Чеклист</button>
+                                <button type="button" class="btn btn-sm btn-outline-success" data-action="open-packing-modal" data-trip-id="@trip.Id">🎒 Чеклист</button>
                             </div>
                         </div>
                     </div>
@@ -90,55 +90,13 @@
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/trip-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/views/packing-list.css" asp-append-version="true" />
+}
+
 @section Scripts {
-    <script>
-        function openPackingModal(tripId) {
-            $('#packingListModalContent').html('<div class="p-5 text-center"><div class="spinner-border text-primary"></div></div>');
-            var myModal = new bootstrap.Modal(document.getElementById('packingListModal'));
-            myModal.show();
-            $.get('/Trip/GetPackingListModal?tripId=' + tripId, function (data) {
-                $('#packingListModalContent').html(data);
-            });
-        }
-
-        function toggleItem(itemId, checkbox) {
-            var labelSpan = $(checkbox).siblings('span');
-            $.post('/Trip/TogglePackingItem', { itemId: itemId }, function () {
-                if(checkbox.checked) {
-                    labelSpan.addClass('text-decoration-line-through text-muted');
-                } else {
-                    labelSpan.removeClass('text-decoration-line-through text-muted');
-                }
-            });
-        }
-
-        function addTripItem(e, tripId) {
-            e.preventDefault();
-            var name = $('#newItemName').val();
-            var cat = $('#newItemCategory').val();
-            $.post('/Trip/AddTripPackingItem', { tripId: tripId, name: name, category: cat }, function (data) {
-                $('#packingListModalContent').html(data);
-            });
-        }
-
-        function syncList(tripId) {
-            $.post('/Trip/SyncPackingList', { tripId: tripId }, function (data) {
-                $('#packingListModalContent').html(data);
-            });
-        }
-
-        function resetList(tripId) {
-            $.post('/Trip/ResetPackingList', { tripId: tripId }, function (data) {
-                $('#packingListModalContent').html(data);
-            });
-        }
-
-        function deleteTripItem(itemId, tripId) {
-            if(confirm('Ви впевнені, що хочете видалити цю річ?')) {
-                $.post('/Trip/DeleteTripPackingItem', { itemId: itemId, tripId: tripId }, function (data) {
-                    $('#packingListModalContent').html(data);
-                });
-            }
-        }
-    </script>
+    <environment include="Development">
+        <script src="~/js/views/trip-index.js" asp-append-version="true"></script>
+    </environment>
 }

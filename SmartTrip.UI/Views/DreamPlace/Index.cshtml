@@ -1,13 +1,13 @@
 @model IEnumerable<SmartTrip.Models.DreamPlace>
 
 @{
-    ViewData["Title"] = "Омріяні місця";
+    ViewData["Title"] = "РћРјСЂС–СЏРЅС– РјС–СЃС†СЏ";
 }
 
 <div class="container mt-4">
-    <h2>Омріяні місця</h2>
+    <h2>РћРјСЂС–СЏРЅС– РјС–СЃС†СЏ</h2>
     <p>
-        <a asp-action="Create" class="btn btn-primary">Додати нове місце</a>
+        <a asp-action="Create" class="btn btn-primary">Р”РѕРґР°С‚Рё РЅРѕРІРµ РјС–СЃС†Рµ</a>
     </p>
     <div class="row row-cols-1 row-cols-md-3 g-4">
         @foreach (var item in Model) {
@@ -15,7 +15,7 @@
             <div class="card h-100">
                 @if (!string.IsNullOrEmpty(item.PhotoUrl))
                 {
-                    <img src="@item.PhotoUrl" class="card-img-top" alt="@item.Name" style="height:200px; object-fit:cover;">
+                    <img src="@item.PhotoUrl" class="card-img-top dreamplace-img" alt="@item.Name">
                 }
                 <div class="card-body">
                     <h5 class="card-title">@item.Name</h5>
@@ -25,14 +25,18 @@
                 <div class="card-footer bg-transparent border-top-0 d-flex justify-content-between">
                     <form asp-action="PlanTrip" asp-route-id="@item.Id" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-success btn-sm">Запланувати</button>
+                        <button type="submit" class="btn btn-success btn-sm">Р—Р°РїР»Р°РЅСѓРІР°С‚Рё</button>
                     </form>
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Деталі</a>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Редагувати</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Видалити</a>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Р”РµС‚Р°Р»С–</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Р РµРґР°РіСѓРІР°С‚Рё</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Р’РёРґР°Р»РёС‚Рё</a>
                 </div>
             </div>
         </div>
         }
     </div>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/dreamplace.css" asp-append-version="true" />
+}

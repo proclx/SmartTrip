@@ -35,12 +35,12 @@
                             @if (!string.IsNullOrEmpty(Model.RouteToDestination))
                             {
                                 <h5>🚗 Туди (з @Model.StartingPoint до @Model.CityName):</h5>
-                                <div class="route-description" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">@Html.Raw(Model.RouteToDestination.Replace("\n", "<br>"))</div>
+                                <div class="route-description">@Html.Raw(Model.RouteToDestination.Replace("\n", "<br>"))</div>
                             }
                             @if (!string.IsNullOrEmpty(Model.RouteBack))
                             {
                                 <h5>🚗 Назад (з @Model.CityName до @Model.StartingPoint):</h5>
-                                <div class="route-description" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">@Html.Raw(Model.RouteBack.Replace("\n", "<br>"))</div>
+                                <div class="route-description">@Html.Raw(Model.RouteBack.Replace("\n", "<br>"))</div>
                             }
                         </div>
                     </div>
@@ -68,7 +68,7 @@
                                         <li class="list-group-item p-4" id="item-@item.Id">
                                             <div class="d-flex w-100 justify-content-between align-items-center">
                                                 <div>
-                                                    <h5 class="mb-1 text-dark fw-bold">
+                                                    <h5 class="mb-1 text-dark fw-bold item-title">
                                                         @if (string.Equals(item.PlaceType, "Hotel", StringComparison.OrdinalIgnoreCase))
                                                         {
                                                             <span>🏨</span>
@@ -84,7 +84,7 @@
 
                                                         @item.PlaceName
                                                     </h5>
-                                                    <p class="mb-1 text-muted">@item.Notes</p>
+                                                    <p class="mb-1 text-muted item-desc">@item.Notes</p>
                                                 </div>
                                                 <div class="text-end">
                                                     <span class="badge bg-light text-dark fs-6 border">
@@ -95,8 +95,16 @@
                                                 </div>
                                             </div>
                                             <div class="mt-3">
-                                                <button class="btn btn-sm btn-outline-secondary" onclick="openEditModal(@item.Id, '@item.PlaceName', '@item.Notes')">Редагувати</button>
-                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteItem(@item.Id)">Видалити</button>
+                                                <button class="btn btn-sm btn-outline-secondary"
+                                                    data-action="edit-itinerary-item"
+                                                    data-item-id="@item.Id"
+                                                    data-item-title="@item.PlaceName"
+                                                    data-item-desc="@item.Notes">
+                                                    Редагувати
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" data-action="delete-itinerary-item" data-item-id="@item.Id">
+                                                    Видалити
+                                                </button>
                                             </div>
                                         </li>
                                     }
@@ -168,41 +176,18 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
-                <button type="button" class="btn btn-primary" onclick="saveItemChanges()">Зберегти</button>
+                <button type="button" class="btn btn-primary" data-action="save-itinerary-item">Зберегти</button>
             </div>
         </div>
     </div>
 </div>
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/trip-itinerary.css" asp-append-version="true" />
+}
+
 @section Scripts {
-    <script>
-        function openEditModal(id, title, desc) {
-            $('#editItemId').val(id);
-            $('#editItemTitle').val(title);
-            $('#editItemDesc').val(desc);
-            var myModal = new bootstrap.Modal(document.getElementById('editItemModal'));
-            myModal.show();
-        }
-
-        function saveItemChanges() {
-            var id = $('#editItemId').val();
-            var title = $('#editItemTitle').val();
-            var desc = $('#editItemDesc').val();
-
-            $.post('/Trip/UpdateItineraryItem', { id: id, title: title, description: desc }, function () {
-                // Оновлюємо UI (або робимо location.reload())
-                $('#item-' + id + ' .item-title').text(title);
-                $('#item-' + id + ' .item-desc').text(desc);
-                bootstrap.Modal.getInstance(document.getElementById('editItemModal')).hide();
-            });
-        }
-
-        function deleteItem(id) {
-            if (confirm('Ви впевнені?')) {
-                $.post('/Trip/DeleteItineraryItem', { id: id }, function () {
-                    $('#item-' + id).slideUp(function(){ $(this).remove(); });
-                });
-            }
-        }
-    </script>
+    <environment include="Development">
+        <script src="~/js/views/trip-itinerary.js" asp-append-version="true"></script>
+    </environment>
 }

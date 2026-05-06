@@ -24,7 +24,7 @@
             </div>
         </div>
         <div class="col-lg-5 p-0 overflow-hidden text-center">
-            <div class="fs-1" style="font-size: 10rem !important;">🌍🎒</div>
+            <div class="hero-emoji">🌍🎒</div>
         </div>
     </div>
 </div>
@@ -33,21 +33,21 @@
     <h2 class="pb-2 border-bottom text-center mb-5">Чому саме SmartTrip?</h2>
     <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
         <div class="col feature-block text-center">
-            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white fs-2 mb-3 rounded-circle shadow" style="width: 4rem; height: 4rem;">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white fs-2 mb-3 rounded-circle shadow feature-icon">
                 🗺️
             </div>
             <h3 class="fs-4 fw-bold">Розумні маршрути</h3>
             <p class="text-muted">Ми оптимізуємо логістику так, щоб ти встиг побачити найцікавіше, не витрачаючи час на зайві переїзди.</p>
         </div>
         <div class="col feature-block text-center">
-            <div class="d-inline-flex align-items-center justify-content-center bg-success text-white fs-2 mb-3 rounded-circle shadow" style="width: 4rem; height: 4rem;">
+            <div class="d-inline-flex align-items-center justify-content-center bg-success text-white fs-2 mb-3 rounded-circle shadow feature-icon">
                 ⏱️
             </div>
             <h3 class="fs-4 fw-bold">Економія часу</h3>
             <p class="text-muted">Забудь про години пошуків у Google. Найкращі ресторани, пам'ятки та готелі вже зібрані для тебе.</p>
         </div>
         <div class="col feature-block text-center">
-            <div class="d-inline-flex align-items-center justify-content-center bg-warning text-dark fs-2 mb-3 rounded-circle shadow" style="width: 4rem; height: 4rem;">
+            <div class="d-inline-flex align-items-center justify-content-center bg-warning text-dark fs-2 mb-3 rounded-circle shadow feature-icon">
                 📱
             </div>
             <h3 class="fs-4 fw-bold">Все в одному місці</h3>
@@ -55,3 +55,7 @@
         </div>
     </div>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/home.css" asp-append-version="true" />
+}

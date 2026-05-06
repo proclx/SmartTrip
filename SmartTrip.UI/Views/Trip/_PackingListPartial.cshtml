@@ -14,16 +14,16 @@
 
     @* Кнопки синхронізації *@
     <div class="d-flex justify-content-between mb-4 pb-3 border-bottom">
-        <button class="btn btn-sm btn-outline-success" onclick="syncList(@tripId)">
+        <button class="btn btn-sm btn-outline-success" data-action="sync-list" data-trip-id="@tripId">
             <i class="bi bi-arrow-repeat"></i> Оновити з шаблону
         </button>
-        <button class="btn btn-sm btn-outline-danger" onclick="if(confirm('Точно скинути? Усі відмітки зникнуть!')) resetList(@tripId)">
+        <button class="btn btn-sm btn-outline-danger" data-action="reset-list" data-trip-id="@tripId">
             <i class="bi bi-arrow-counterclockwise"></i> Скинути до базового
         </button>
     </div>
 
     @* Форма додавання нової речі *@
-    <form id="addPackingItemForm" class="row g-2 mb-4" onsubmit="addTripItem(event, @tripId)">
+    <form id="addPackingItemForm" class="row g-2 mb-4" data-action="add-trip-item" data-trip-id="@tripId">
         <div class="col-md-5">
             <input type="text" id="newItemName" class="form-control form-control-sm" placeholder="Нова річ" required />
         </div>
@@ -59,18 +59,18 @@
                 @foreach (var item in group)
                 {
                     <div class="list-group-item d-flex justify-content-between px-0 border-0 align-items-center">
-                        <label class="d-flex gap-3 align-items-center flex-grow-1 mb-0" style="cursor: pointer;">
-                            <input class="form-check-input flex-shrink-0" type="checkbox" value="@item.Id"
-                                   style="font-size: 1.375em;"
+                        <label class="d-flex gap-3 align-items-center flex-grow-1 mb-0 packing-item-label">
+                            <input class="form-check-input flex-shrink-0 packing-checkbox" type="checkbox" value="@item.Id"
                                    @(item.IsChecked ? "checked" : "")
-                                   onchange="toggleItem(@item.Id, this)" />
+                                   data-action="toggle-item"
+                                   data-item-id="@item.Id" />
 
                             <span class="pt-1 form-checked-content @(item.IsChecked ? "text-decoration-line-through text-muted" : "")">
                                 @item.Name
                             </span>
                         </label>
 
-                        <button type="button" class="btn btn-sm text-danger border-0 px-2" onclick="deleteTripItem(@item.Id, @tripId)" title="Видалити">
+                        <button type="button" class="btn btn-sm text-danger border-0 px-2" data-action="delete-trip-item" data-item-id="@item.Id" data-trip-id="@tripId" title="Видалити">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>

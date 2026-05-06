@@ -17,12 +17,12 @@
                                 <div class="profile-image-preview">
                                     @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
                                     {
-                                        <img id="preview" src="@Model.ProfileImageUrl" alt="Фото профіля" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #007bff;" />
+                                        <img id="preview" src="@Model.ProfileImageUrl" alt="Фото профіля" class="img-fluid rounded-circle" />
                                     }
                                     else
                                     {
-                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center" id="preview-placeholder" style="width: 150px; height: 150px; margin: 0 auto; border: 3px solid #ccc;">
-                                            <i class="fas fa-user" style="font-size: 60px; color: #999;"></i>
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center profile-placeholder-sm" id="preview-placeholder">
+                                            <i class="fas fa-user"></i>
                                         </div>
                                     }
                                 </div>
@@ -39,7 +39,7 @@
 
                                 @if (!string.IsNullOrEmpty(Model.ProfileImageUrl))
                                 {
-                                    <button type="button" class="btn btn-sm btn-danger" id="deleteImageBtn" onclick="deleteProfileImage()">
+                                    <button type="button" class="btn btn-sm btn-danger" id="deleteImageBtn">
                                         <i class="fas fa-trash"></i> Видалити поточне фото
                                     </button>
                                 }
@@ -90,46 +90,15 @@
 <!-- Прихована форма для видалення фото -->
 <form method="post" asp-action="DeleteImage" asp-controller="Profile" id="deleteImageForm" style="display: none;"></form>
 
-<style>
-    .profile-image-preview {
-        padding: 20px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        text-align: center;
-    }
-</style>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <environment include="Development">
+        <script src="~/js/views/profile-edit.js" asp-append-version="true"></script>
+    </environment>
+}
 
-    <script>
-        // Попередній перегляд зображення
-        document.getElementById('imageInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const preview = document.getElementById('preview');
-                    if (preview) {
-                        preview.src = event.target.result;
-                    } else {
-                        const placeholder = document.getElementById('preview-placeholder');
-                        if (placeholder) {
-                            placeholder.innerHTML = '<img src="' + event.target.result + '" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />';
-                        }
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Видалення фото профіля
-        function deleteProfileImage() {
-            if (confirm('Ви впевнені, що хочете видалити фото?')) {
-                document.getElementById('deleteImageForm').submit();
-            }
-        }
-    </script>
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/profile-edit.css" asp-append-version="true" />
 }

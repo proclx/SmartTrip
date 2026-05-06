@@ -27,25 +27,8 @@
                     var instaText = $"Моя подорож: {Model.City} ({Model.StartDate:dd.MM.yyyy} - {Model.EndDate:dd.MM.yyyy}). Переглянь тут: {shareUrl}";
                 }
                 <a class="btn btn-outline-primary" href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(shareUrl)&quote=@Uri.EscapeDataString(message)" target="_blank" rel="noopener noreferrer"><i class="bi bi-facebook"></i> Facebook</a>
-                <button type="button" class="btn btn-outline-info" onclick="shareInstagram()"><i class="bi bi-instagram"></i> Instagram</button>
+                <button type="button" class="btn btn-outline-info" id="shareInstagramBtn" data-share-text="@instaText"><i class="bi bi-instagram"></i> Instagram</button>
             </div>
-            <script>
-                function shareInstagram() {
-                    const shareText = '@instaText';
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(shareText).then(function () {
-                            alert('Текст скопійовано до буфера обміну. Відкрий Instagram і встав текст у пост.');
-                            window.open('https://www.instagram.com/', '_blank');
-                        }, function () {
-                            alert('Не вдалося скопіювати текст. Відкрийте Instagram та вставте вручну.');
-                            window.open('https://www.instagram.com/', '_blank');
-                        });
-                    } else {
-                        alert('Ваш браузер не підтримує автоматичне копіювання. Відкрийте Instagram і вставте посилання вручну.');
-                        window.open('https://www.instagram.com/', '_blank');
-                    }
-                }
-            </script>
         </div>
     </div>
 
@@ -56,7 +39,7 @@
                 <i class="bi bi-safe text-warning me-2"></i> Приватні нотатки (Сейф)
             </div>
             <div class="card-body bg-light">
-                <p class="card-text mb-0" style="white-space: pre-wrap; font-family: monospace; font-size: 1.05rem;">@Model.Notes</p>
+                <p class="card-text mb-0 notes-block">@Model.Notes</p>
             </div>
         </div>
     }
@@ -73,7 +56,7 @@
             {
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0">
-                        <img src="@photo.FilePath" class="card-img-top rounded-top" style="height: 180px; object-fit: cover;" />
+                        <img src="@photo.FilePath" class="card-img-top rounded-top trip-photo" />
                         <div class="card-body p-2 bg-light rounded-bottom">
                             <form asp-action="DeletePhoto" method="post" class="d-grid">
                                 @Html.AntiForgeryToken()
@@ -101,7 +84,7 @@
                         <div class="card h-100 shadow-sm border-0">
                             @if (!string.IsNullOrEmpty(ev.ImageUrl))
                             {
-                                <img src="@ev.ImageUrl" class="card-img-top" alt="@ev.Title" style="height: 160px; object-fit: cover;">
+                                <img src="@ev.ImageUrl" class="card-img-top event-photo" alt="@ev.Title">
                             }
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title fw-bold">@ev.Title</h5>
@@ -118,3 +101,13 @@
         </div>
     }
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/trip-details.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <environment include="Development">
+        <script src="~/js/views/trip-details.js" asp-append-version="true"></script>
+    </environment>
+}

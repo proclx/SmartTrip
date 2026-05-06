@@ -1,0 +1,16 @@
+.dreamplace-img {
+  height: 200px;
+  object-fit: cover;
+}
+
+.dreamplace-edit-img {
+  max-width: 200px;
+}
+
+.dreamplace-delete-card {
+  max-width: 500px;
+}
+
+.dreamplace-delete-img {
+  max-height: 250px;
+}

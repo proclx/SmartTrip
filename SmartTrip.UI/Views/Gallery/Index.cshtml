@@ -48,8 +48,7 @@
                             <div class="card h-100 border-0 shadow-sm gallery-card">
                                 @* Посилання для Lightbox. data-gallery дозволяє гортати фото лише цієї подорожі *@
                                 <a href="@photo.FilePath" class="glightbox" data-gallery="gallery-@firstPhoto.TripId">
-                                    <img src="@photo.FilePath" class="card-img-top rounded shadow-sm" alt="Trip Photo"
-                                         style="height: 180px; object-fit: cover; transition: transform .3s;">
+                                     <img src="@photo.FilePath" class="card-img-top rounded shadow-sm" alt="Trip Photo">
                                 </a>
 
                                 <div class="card-body p-2 d-flex justify-content-between align-items-center">
@@ -71,26 +70,12 @@
     }
 </div>
 
-@* Додаткові стилі для ефектів *@
-<style>
-    .gallery-card img:hover {
-        transform: scale(1.03);
-        cursor: pointer;
-    }
-
-    .trip-section {
-        background-color: #f8f9fa !important;
-    }
-</style>
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/gallery.css" asp-append-version="true" />
+}
 
 @section Scripts {
-    <script type="text/javascript">
-        // Ініціалізація Lightbox
-        const lightbox = GLightbox({
-            selector: '.glightbox',
-            touchNavigation: true,
-            loop: true,
-            zoomable: true
-        });
-    </script>
+    <environment include="Development">
+        <script src="~/js/views/gallery.js" asp-append-version="true"></script>
+    </environment>
 }

@@ -1,0 +1,15 @@
+.notes-block {
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1.05rem;
+}
+
+.trip-photo {
+  height: 180px;
+  object-fit: cover;
+}
+
+.event-photo {
+  height: 160px;
+  object-fit: cover;
+}

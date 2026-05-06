@@ -1,0 +1,14 @@
+.gallery-card img {
+  height: 180px;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.gallery-card img:hover {
+  transform: scale(1.03);
+  cursor: pointer;
+}
+
+.trip-section {
+  background-color: #f8f9fa;
+}

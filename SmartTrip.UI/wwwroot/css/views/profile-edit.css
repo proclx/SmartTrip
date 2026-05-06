@@ -1,0 +1,32 @@
+.profile-image-preview {
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.profile-image-preview img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 3px solid #0d6efd;
+}
+
+.profile-image-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profile-placeholder-sm {
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  border: 3px solid #ccc;
+}
+
+.profile-placeholder-sm i {
+  font-size: 60px;
+  color: #999;
+}

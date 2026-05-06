@@ -20,3 +20,29 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+:root {
+  --st-card-radius: 0.75rem;
+  --st-shadow-soft: 0 0.5rem 1.25rem rgba(16, 24, 40, 0.08);
+  --st-surface: #ffffff;
+  --st-bg: #f5f7fb;
+}
+
+body {
+  background-color: var(--st-bg);
+  color: #1f2937;
+}
+
+.card,
+.modal-content {
+  border-radius: var(--st-card-radius);
+  box-shadow: var(--st-shadow-soft);
+}
+
+.btn {
+  border-radius: 0.5rem;
+}
+
+.toast-container {
+  z-index: 1055;
+}
