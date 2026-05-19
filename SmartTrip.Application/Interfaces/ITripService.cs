@@ -36,5 +36,10 @@ namespace SmartTrip.Application.Interfaces
         Task<int> CloneTripAsync(int tripId, string userId);
 
         Task UpdateDayItineraryOrderAsync(int dayId, List<int> orderedItemIds);
+
+        Task<VotingSession> StartVotingSessionAsync(int tripId, int peopleCount, string preferences);
+        Task<VotingSession> GetVotingSessionAsync(Guid shareToken);
+        Task SubmitVoteAsync(Guid shareToken, int votingItemId, string voterId, bool isLiked);
+        Task TryFinalizeVotingAsync(Guid shareToken);
     }
 }

@@ -25,6 +25,10 @@ namespace SmartTrip.Data
 
         public DbSet<LocalEvent> LocalEvents { get; set; } 
 
+        public DbSet<VotingSession> VotingSessions { get; set; }
+        public DbSet<VotingItem> VotingItems { get; set; }
+        public DbSet<Vote> Votes { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

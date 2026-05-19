@@ -100,7 +100,50 @@
             </div>
         </div>
     }
+
+    <div class="card my-4">
+        <div class="card-header bg-primary text-white">
+            <h5>🤝 Спільне голосування (Beta)</h5>
+        </div>
+        <div class="card-body">
+            <p>Не можете вирішити, куди піти? Запустіть Tinder-подібне голосування для друзів. ШІ згенерує локації, і ви всі оберете найкращі!</p>
+            
+            <form asp-action="StartVoting" method="post">
+                <input type="hidden" name="tripId" value="@Model.Id" />
+                
+                <div class="mb-3">
+                    <label>Скільки людей голосує?</label>
+                    <input type="number" name="peopleCount" value="@(Model.PeopleCount > 0 ? Model.PeopleCount : 2)" min="2" max="10" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label>Які побажання? (необов'язково, напр: "більше музеїв і пабів")</label>
+                    <input type="text" name="preferences" class="form-control" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Запустити голосування
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 @section Styles {
     <link rel="stylesheet" href="~/css/views/trip-details.css" asp-append-version="true" />

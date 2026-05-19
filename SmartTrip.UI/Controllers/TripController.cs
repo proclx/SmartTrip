@@ -202,7 +202,7 @@ namespace SmartTrip.UI.Controllers
                         StartTime = i.StartTime,
                         EndTime = i.EndTime,
                         Notes = i.Notes ?? string.Empty,
-                        OrderOffset = i.OrderOffset 
+                        OrderOffset = i.OrderOffset  
                     }).ToList()
                 }).ToList()
             };
@@ -569,6 +569,65 @@ namespace SmartTrip.UI.Controllers
 
             await _tripService.UpdateDayItineraryOrderAsync(dayId, orderedItemIds);
             return Ok();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> StartVoting(int tripId, int peopleCount, string preferences)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            // Перевіряємо, чи має доступ користувач до цієї подорожі
+            var trip = await _tripService.GetTripByIdAsync(tripId, userId);
+            if (trip == null) return NotFound();
+
+            try
+            {
+                var session = await _tripService.StartVotingSessionAsync(tripId, peopleCount, preferences);
+                
+                // Генеруємо абсолютне посилання для друзів
+                var link = Url.Action("VoteSession", "Trip", new { token = session.ShareToken }, Request.Scheme);
+                
+                TempData["SuccessMessage"] = $"Голосування запущено! Поділіться цим посиланням з друзями: {link}";
+                
+                return RedirectToAction(nameof(Details), new { id = tripId });
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Помилка: {ex.Message}"; // Тимчасово для дебагу
+                return RedirectToAction(nameof(Details), new { id = tripId });
+            }
+        }
+
+        [AllowAnonymous] // Друзям не потрібна реєстрація
+        [HttpGet("Trip/Vote/{token}")]
+        public async Task<IActionResult> VoteSession(Guid token)
+        {
+            var session = await _tripService.GetVotingSessionAsync(token);
+            if (session == null) return NotFound("Сесію голосування не знайдено.");
+            if (session.IsCompleted) return View("VotingCompleted", session);
+
+            return View(session);
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        public async Task<IActionResult> SubmitSwipe([FromBody] SwipeModel model)
+        {
+            if (model == null || model.Token == Guid.Empty) return BadRequest();
+
+            await _tripService.SubmitVoteAsync(model.Token, model.VotingItemId, model.VoterId, model.IsLiked);
+            
+            return Ok();
+        }
+
+        public class SwipeModel
+        {
+            public Guid Token { get; set; }
+            public int VotingItemId { get; set; }
+            public string VoterId { get; set; }
+            public bool IsLiked { get; set; }
         }
     }
 }

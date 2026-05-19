@@ -1,0 +1,8 @@
+﻿@model SmartTrip.Models.VotingSession
+@{
+    ViewData["Title"] = "Голосування завершено";
+}
+<div class="text-center mt-5">
+    <h2>✅ Голосування для @Model.Trip.City.Name вже завершено!</h2>
+    <p>Усі @Model.PeopleCount учасників проголосували. Ідеальний маршрут був згенерований та надісланий організатору.</p>
+</div>

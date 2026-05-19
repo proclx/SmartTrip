@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using SmartTrip.Data;
 using SmartTrip.Models;
+using SmartTrip.Models.Enum;   
 using SmartTrip.Application.Interfaces;
 
 namespace SmartTrip.Application.Services
@@ -382,6 +383,166 @@ namespace SmartTrip.Application.Services
             }
 
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<VotingSession> StartVotingSessionAsync(int tripId, int peopleCount, string preferences)
+        {
+            var trip = await _context.Trips.Include(t => t.City).FirstOrDefaultAsync(t => t.Id == tripId);
+            if (trip == null || trip.City == null) throw new Exception("Подорож або місто не знайдено");
+
+            // 1. Генеруємо пул через ШІ
+            var daysCount = (trip.EndDate - trip.StartDate).Days + 1;
+            var generatedItems = await _tripGeneratorService.GenerateVotingPoolAsync(trip.City.Name, daysCount, preferences);
+
+            // 2. Створюємо сесію
+            var session = new VotingSession
+            {
+                TripId = tripId,
+                PeopleCount = peopleCount,
+                IsCompleted = false,
+                ShareToken = Guid.NewGuid(),
+                VotingItems = generatedItems
+            };
+
+            _context.VotingSessions.Add(session);
+            await _context.SaveChangesAsync();
+
+            return session;
+        }
+
+        public async Task<VotingSession> GetVotingSessionAsync(Guid shareToken)
+        {
+            return await _context.VotingSessions
+                .Include(s => s.VotingItems)
+                .Include(s => s.Trip)
+                .ThenInclude(t => t.City)
+                .FirstOrDefaultAsync(s => s.ShareToken == shareToken);
+        }
+
+        public async Task SubmitVoteAsync(Guid shareToken, int votingItemId, string voterId, bool isLiked)
+        {
+            var session = await _context.VotingSessions
+                .Include(s => s.VotingItems)
+                .FirstOrDefaultAsync(s => s.ShareToken == shareToken);
+
+            if (session == null || session.IsCompleted) return;
+
+            // Перевіряємо, чи користувач вже голосував за цю локацію
+            var existingVote = await _context.Votes
+                .FirstOrDefaultAsync(v => v.VotingItemId == votingItemId && v.VoterId == voterId);
+
+            if (existingVote == null)
+            {
+                var vote = new Vote
+                {
+                    VotingItemId = votingItemId,
+                    VoterId = voterId,
+                    IsLiked = isLiked
+                };
+                _context.Votes.Add(vote);
+                await _context.SaveChangesAsync();
+            }
+
+            // Перевіряємо, чи можна фіналізувати
+            await TryFinalizeVotingAsync(shareToken);
+        }
+
+        public async Task TryFinalizeVotingAsync(Guid shareToken)
+        {
+            var session = await _context.VotingSessions
+                .Include(s => s.VotingItems)
+                    .ThenInclude(i => i.Votes)
+                .Include(s => s.Trip)
+                    .ThenInclude(t => t.TripDays)
+                .Include(s => s.Trip)
+                    .ThenInclude(t => t.City)
+                .FirstOrDefaultAsync(s => s.ShareToken == shareToken);
+
+            if (session == null || session.IsCompleted) return;
+
+            // Рахуємо кількість унікальних виборців у цій сесії
+            var distinctVotersCount = session.VotingItems
+                .SelectMany(i => i.Votes)
+                .Select(v => v.VoterId)
+                .Distinct()
+                .Count();
+
+            // Якщо проголосували ще не всі (припускаємо, що кожен має проголосувати хоча б раз, щоб його порахувало)
+            if (distinctVotersCount < session.PeopleCount) return;
+
+            session.IsCompleted = true;
+
+            // Вибираємо локації, які зібрали найбільше лайків (наприклад, більше 50% від кількості людей)
+            var threshold = session.PeopleCount / 2.0;
+            var approvedItems = session.VotingItems
+                .Where(i => i.Votes.Count(v => v.IsLiked) >= threshold)
+                .ToList();
+
+            if (approvedItems.Any())
+            {
+                var daysCount = session.Trip.TripDays.Count;
+                var finalizedItinerary = await _tripGeneratorService.FinalizeItineraryFromVotesAsync(session.Trip.City.Name, daysCount, approvedItems);
+
+                // Зберігаємо результати у маршрут (аналогічно до стандартного формування маршруту)
+                await ApplyVotedItineraryToTripAsync(session.Trip, finalizedItinerary);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // ТУТ можна додати виклик SignalR для сповіщення (NotificationHub), що маршрут готовий!
+        }
+
+        private async Task ApplyVotedItineraryToTripAsync(Trip trip, List<ItineraryItem> aiGeneratedItems)
+        {
+            // Цей метод дуже схожий на ApplyGeneratedDataToTripAsync з TripGeneratorService.
+            // Ми беремо згенеровані елементи, знаходимо/створюємо Place і прив'язуємо до TripDay.
+            
+            var tripDays = trip.TripDays.OrderBy(d => d.DayNumber).ToList();
+            
+            // Захист від завеликої кількості днів з боку ШІ
+            var itemsToProcess = aiGeneratedItems.Take(tripDays.Count * 5).ToList(); // припустимо макс 5 подій на день
+
+            int currentDayIndex = 0;
+            foreach (var item in itemsToProcess)
+            {
+                if (currentDayIndex >= tripDays.Count) break;
+
+                var tripDay = tripDays[currentDayIndex];
+
+                // Оскільки ШІ не повернув нам існуючий PlaceId, створюємо тимчасовий Place або шукаємо за ідентичною назвою
+                var place = await _context.Places
+                    .FirstOrDefaultAsync(p => p.CityId == trip.CityId && p.Name == item.Notes); // В Notes ми тимчасово зберегли назву з ШІ
+
+                if (place == null)
+                {
+                    place = new Place
+                    {
+                        CityId = trip.CityId,
+                        Name = string.IsNullOrEmpty(item.Notes) ? "Обрана локація" : item.Notes, // Використовуємо Notes як збережену назву
+                        Type = PlaceType.Attraction,
+                        Rating = 5.0
+                    };
+                    _context.Places.Add(place);
+                    await _context.SaveChangesAsync();
+                }
+
+                var dbItineraryItem = new ItineraryItem
+                {
+                    TripDayId = tripDay.Id,
+                    PlaceId = place.Id,
+                    StartTime = item.StartTime,
+                    EndTime = item.EndTime,
+                    Notes = "Додано через спільне голосування!"
+                };
+
+                _context.ItineraryItems.Add(dbItineraryItem);
+
+                // Проста логіка розподілу: кожні 3-4 локації переходимо на новий день
+                if (_context.ItineraryItems.Local.Count(i => i.TripDayId == tripDay.Id) >= 3)
+                {
+                    currentDayIndex++;
+                }
+            }
         }
     }
 }

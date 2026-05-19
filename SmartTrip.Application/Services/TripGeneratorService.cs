@@ -401,5 +401,157 @@ namespace SmartTrip.Application.Services
                 return null; 
             }
         }
+
+        public async Task<List<VotingItem>> GenerateVotingPoolAsync(string cityName, int daysCount, string preferences)
+        {
+            var prompt = $@"
+Згенеруй великий пул (20-30 штук) дуже різноманітних цікавих локацій та подій у місті {cityName} для подорожі на {daysCount} днів.
+Врахуй побажання: {(string.IsNullOrEmpty(preferences) ? "загальні туристичні та нетипові місця" : preferences)}.
+Локації повинні варіюватися від класичних музеїв до андеграундних барів, парків, ресторанів та екстремальних екскурсій.
+Дай відповідь ВИКЛЮЧНО у форматі масиву JSON. Не додавай жодного форматування Markdown (на зразок ```json ... ```), лише чистий масив.
+Кожен об'єкт повинен мати такі поля:
+- ""Name"": назва локації,
+- ""Description"": короткий захоплюючий опис (1-2 речення),
+- ""Category"": тип (наприклад, 'Музей', 'Ресторан', 'Парк', 'Розваги', 'Екскурсія'),
+- ""ImageUrl"": залиш порожнім рядком """".
+";
+
+            var requestBody = new
+            {
+                contents = new[] { new { parts = new[] { new { text = prompt } } } }
+            };
+
+            string jsonBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            string cleanApiKey = _apiKey.Trim();
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={cleanApiKey}";
+
+            try
+            {
+                var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new List<VotingItem>();
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var aiText = jsonDoc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text").GetString();
+
+                if (string.IsNullOrEmpty(aiText))
+                {
+                    return new List<VotingItem>();
+                }
+
+                aiText = aiText.Replace("```json", "").Replace("```", "").Trim();
+                
+                var items = JsonSerializer.Deserialize<List<VotingItem>>(aiText, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+                
+                return items ?? new List<VotingItem>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Помилка генерації пулу голосування: {ex.Message}");
+                return new List<VotingItem>();
+            }
+        }
+
+        public async Task<List<ItineraryItem>> FinalizeItineraryFromVotesAsync(string cityName, int daysCount, List<VotingItem> approvedItems)
+        {
+            var locationsJson = JsonSerializer.Serialize(approvedItems.Select(x => new { x.Name, x.Description, x.Category }));
+
+            var prompt = $@"
+Ось список локацій у місті {cityName}, які обрала група туристів:
+{locationsJson}
+
+Склади логічний маршрут на {daysCount} днів, використовуючи ТІЛЬКИ ці локації.
+Враховуй географічну близькість локацій у межах одного дня та логічний час (наприклад, ресторани на обід/вечерю).
+Дай відповідь ВИКЛЮЧНО у форматі масиву JSON. Не додавай жодного форматування Markdown.
+Кожен об'єкт масиву - це елемент маршруту, і він повинен мати:
+- ""DayNumber"": день (від 1 до {daysCount}),
+- ""Time"": приблизний час (наприклад, '10:00:00'),
+- ""PlaceName"": назва локації (одна зі списку),
+- ""Description"": опис активності.
+";
+
+            var requestBody = new
+            {
+                contents = new[] { new { parts = new[] { new { text = prompt } } } }
+            };
+
+            string jsonBody = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(jsonBody, Encoding.UTF8, "application/json");
+
+            string cleanApiKey = _apiKey.Trim();
+            string url = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={cleanApiKey}";
+
+            try
+            {
+                var response = await _httpClient.PostAsync(url, content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new List<ItineraryItem>();
+                }
+
+                var responseString = await response.Content.ReadAsStringAsync();
+
+                using var jsonDoc = JsonDocument.Parse(responseString);
+                var aiText = jsonDoc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text").GetString();
+
+                if (string.IsNullOrEmpty(aiText))
+                {
+                    return new List<ItineraryItem>();
+                }
+
+                aiText = aiText.Replace("```json", "").Replace("```", "").Trim();
+                
+                // Десеріалізуємо у тимчасову структуру для мапінгу
+                var itineraryItemsData = JsonSerializer.Deserialize<List<dynamic>>(aiText, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+
+                // Базовий мапінг (повна прив'язка до PlaceId та TripDayId робитиметься у TripService)
+                var itinerary = new List<ItineraryItem>();
+                if (itineraryItemsData != null)
+                {
+                    foreach (var item in itineraryItemsData)
+                    {
+                        var jsonEl = (JsonElement)item;
+                        var startTimeStr = jsonEl.TryGetProperty("Time", out var timeProp) ? timeProp.GetString() : "10:00:00";
+                        TimeSpan.TryParse(startTimeStr, out var startTime);
+                        
+                        itinerary.Add(new ItineraryItem
+                        {
+                            Notes = jsonEl.TryGetProperty("Description", out var descProp) ? descProp.GetString() ?? "" : "",
+                            StartTime = startTime,
+                            EndTime = startTime.Add(TimeSpan.FromHours(2)), // за замовчуванням +2 години
+                            // Зберігаємо назву місця тимчасово в Notes або створюватимемо PlaceId вище в стеку викликів
+                            // TODO: Caller (TripService) повинен буде співставити PlaceId за назвою.
+                        });
+                    }
+                }
+                
+                return itinerary;
+            }
+            catch (Exception ex)
+            {
+                 Console.WriteLine($"Помилка фіналізації маршруту: {ex.Message}");
+                 return new List<ItineraryItem>();
+            }
+        }
     }
 }
