@@ -34,5 +34,7 @@ namespace SmartTrip.Application.Interfaces
         Task<bool> ApplyRainModeToDayAsync(int tripDayId, string userId);
 
         Task<int> CloneTripAsync(int tripId, string userId);
+
+        Task UpdateDayItineraryOrderAsync(int dayId, List<int> orderedItemIds);
     }
 }

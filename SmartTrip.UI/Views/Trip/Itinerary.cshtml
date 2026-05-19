@@ -1,4 +1,6 @@
-﻿@model SmartTrip.UI.ViewModels.ItineraryViewModel
+﻿@using Microsoft.Extensions.Configuration
+@inject IConfiguration Configuration
+@model SmartTrip.UI.ViewModels.ItineraryViewModel
 
 @{
     ViewData["Title"] = "Мій розклад";
@@ -82,7 +84,7 @@
                                                             <span>📸</span>
                                                         }
 
-                                                        @item.PlaceName
+                                                        @item.PlaceName @(string.IsNullOrWhiteSpace(item.Address) ? "" : $"- {item.Address}")
                                                     </h5>
                                                     <p class="mb-1 text-muted item-desc">@item.Notes</p>
                                                 </div>
@@ -113,6 +115,32 @@
                                 {
                                     <li class="list-group-item text-muted text-center py-4">
                                         Для цього дня подій не знайдено.
+                                    </li>
+                                }
+                            </ul>
+
+                            <!-- Додайте кнопку над списком локацій дня -->
+                            <button class="btn btn-primary map-optimize-btn" data-day-id="@day.Id">
+                                Показати на карті та оптимізувати
+                            </button>
+
+                            <!-- Контейнер для карти -->
+                            <div id="map-container-@day.Id" style="display:none; height: 400px; width: 100%; margin-top: 15px;"></div>
+                            <button class="btn btn-success save-route-btn" style="display:none;" data-day-id="@day.Id">
+                                Зберегти новий порядок
+                            </button>
+
+                            <!-- Ваш існуючий список локацій. Додайте id, data-item-id та data-address -->
+                            <ul class="itinerary-list" id="itinerary-list-@day.Id">
+                                @foreach(var item in day.Items.OrderBy(i => i.OrderOffset))
+                                {
+                                    <!-- Use Address if available. If not, use PlaceName and CityName -->
+                                    var searchQuery = !string.IsNullOrWhiteSpace(item.Address) 
+                                        ? $"{item.Address}, {Model.CityName}" 
+                                        : $"{item.PlaceName}, {Model.CityName}";
+                                        
+                                    <li class="itinerary-item" data-item-id="@item.Id" data-address="@searchQuery">
+                                        @item.PlaceName - @(string.IsNullOrWhiteSpace(item.Address) ? "Адреса не вказана" : item.Address)
                                     </li>
                                 }
                             </ul>
@@ -191,3 +219,93 @@
         <script src="~/js/views/trip-itinerary.js" asp-append-version="true"></script>
     </environment>
 }
+
+<script src="https://maps.googleapis.com/maps/api/js?key=@Configuration["GoogleMaps:ApiKey"]&callback=initMap" async defer></script>
+
+<script>
+    let optimizedOrderIds = [];
+
+    document.querySelectorAll('.map-optimize-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const dayId = this.getAttribute('data-day-id');
+            const mapContainer = document.getElementById(`map-container-${dayId}`);
+            const saveBtn = document.querySelector(`.save-route-btn[data-day-id="${dayId}"]`);
+            
+            mapContainer.style.display = 'block';
+            saveBtn.style.display = 'inline-block';
+            
+            const items = document.querySelectorAll(`#itinerary-list-${dayId} .itinerary-item`);
+            const addresses = Array.from(items).map(item => ({
+                id: item.getAttribute('data-item-id'),
+                address: item.getAttribute('data-address')
+            }));
+
+            // Add this line to verify what is being sent to Google Maps
+            console.log("Calculating route for points:", addresses);
+
+            if (addresses.length < 2) {
+                alert("Потрібно хоча б 2 локації для побудови маршруту.");
+                return;
+            }
+
+            const map = new google.maps.Map(mapContainer, { zoom: 12, center: {lat: 0, lng: 0} });
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+
+            const origin = addresses[0].address;
+            const destination = addresses[addresses.length - 1].address;
+            const waypoints = addresses.slice(1, -1).map(addr => ({
+                location: addr.address,
+                stopover: true
+            }));
+
+            directionsService.route({
+                origin: origin,
+                destination: destination,
+                waypoints: waypoints,
+                optimizeWaypoints: true, // ВАЖЛИВО: Оптимізація увімкнена
+                travelMode: 'WALKING'    // Або 'DRIVING'
+            }, (response, status) => {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                    
+                    // Отримуємо новий оптимізований порядок індексів
+                    const waypointOrder = response.routes[0].waypoint_order;
+                    
+                    optimizedOrderIds = [addresses[0].id]; // Старт залишається
+                    waypointOrder.forEach(index => {
+                        optimizedOrderIds.push(addresses[index + 1].id); // +1 бо waypoints не включають старт
+                    });
+                    optimizedOrderIds.push(addresses[addresses.length - 1].id); // Фініш залишається
+                    
+                } else {
+                    window.alert('Не вдалося побудувати маршрут: ' + status);
+                }
+            });
+        });
+    });
+
+    // Збереження
+    document.querySelectorAll('.save-route-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const dayId = this.getAttribute('data-day-id');
+            
+            fetch(`/Trip/OptimizeDayRoute?dayId=${dayId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Якщо використовуєте AntiForgery Token:
+                    // 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(optimizedOrderIds)
+            })
+            .then(response => {
+                if(response.ok) {
+                    location.reload(); // Перезавантажуємо сторінку, щоб показати новий список
+                } else {
+                    alert("Помилка збереження.");
+                }
+            });
+        });
+    });
+</script>

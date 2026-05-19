@@ -262,15 +262,14 @@ namespace SmartTrip.Application.Services
             return true;
         }
 
-        // Add this method to the TripService class
 
         public async Task<bool> ApplyRainModeToDayAsync(int tripDayId, string userId)
         {
             var tripDay = await _context.TripDays
                 .Include(td => td.Trip)
-                    .ThenInclude(t => t.City) // ДОДАНО: підвантажуємо місто
+                    .ThenInclude(t => t.City) 
                 .Include(td => td.ItineraryItems)
-                    .ThenInclude(i => i.Place) // ДОДАНО: підвантажуємо місця
+                    .ThenInclude(i => i.Place) 
                 .FirstOrDefaultAsync(td => td.Id == tripDayId && td.Trip.UserId == userId);
 
             if (tripDay == null || tripDay.ItineraryItems == null || !tripDay.ItineraryItems.Any())
@@ -278,21 +277,17 @@ namespace SmartTrip.Application.Services
                 return false;
             }
 
-            // Instruct AI to preserve meal times but swap outdoor locations
             var adaptedItinerary = await _tripGeneratorService.AdaptForRainModeAsync(
                 tripDay.Trip.City?.Name ?? string.Empty,
                 tripDay.ItineraryItems.ToList()
             );
-
-            // Якщо ШІ повернув помилку (передано null) - скасовуємо 
+ 
             if (adaptedItinerary == null || !adaptedItinerary.Any())
             {
                 return false; 
             }
 
-            // Remove old outdoor-heavy schedule
             _context.ItineraryItems.RemoveRange(tripDay.ItineraryItems);
-            // Фіксуємо видалення перед додаванням нових
             await _context.SaveChangesAsync();
 
             // Apply new indoor schedule
@@ -367,6 +362,26 @@ namespace SmartTrip.Application.Services
             await _packingService.InitializeTripListAsync(clonedTrip.Id, userId);
 
             return clonedTrip.Id;
+        }
+
+        public async Task UpdateDayItineraryOrderAsync(int dayId, List<int> orderedItemIds)
+        {
+            var day = await _context.TripDays
+                .Include(d => d.ItineraryItems)
+                .FirstOrDefaultAsync(d => d.Id == dayId);
+
+            if (day == null) throw new Exception("Day not found");
+
+            for (int i = 0; i < orderedItemIds.Count; i++)
+            {
+                var item = day.ItineraryItems.FirstOrDefault(xi => xi.Id == orderedItemIds[i]);
+                if (item != null)
+                {
+                    item.OrderOffset = i; 
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

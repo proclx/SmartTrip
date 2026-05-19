@@ -30,9 +30,15 @@ namespace SmartTrip.UI.ViewModels
         
         public string PlaceName { get; set; } = string.Empty;
         public string PlaceType { get; set; } = string.Empty; // "Hotel" | "Restaurant" | "Attraction"
+        
+        // ДОДАНО: Адреса місця
+        public string Address { get; set; } = string.Empty; 
+        
         public double? Rating { get; set; }
         public TimeSpan StartTime { get; set; }
         public TimeSpan EndTime { get; set; }
         public string Notes { get; set; } = string.Empty;
+        
+        public int OrderOffset { get; set; }
     }
 }

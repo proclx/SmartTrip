@@ -18,5 +18,8 @@ namespace SmartTrip.Models
         public TimeSpan EndTime { get; set; }
 
         public string? Notes { get; set; }
+
+        // Додайте це поле для збереження порядку маршуту
+        public int OrderOffset { get; set; } 
     }
 }

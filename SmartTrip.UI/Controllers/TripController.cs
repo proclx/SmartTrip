@@ -152,7 +152,7 @@ namespace SmartTrip.UI.Controllers
                 RouteBack = trip.RouteBack,
                 Days = trip.TripDays.Select(d => new ItineraryDayViewModel
                 {
-                    Id = d.Id, // ДОДАНО РЯДОК
+                    Id = d.Id, 
                     DayIndex = d.DayNumber,
                     Date = d.Date,
                     Items = d.ItineraryItems.Select(i => new ItineraryItemViewModel
@@ -160,10 +160,14 @@ namespace SmartTrip.UI.Controllers
                         Id = i.Id, 
                         PlaceName = i.Place?.Name ?? "Невідоме місце",
                         PlaceType = i.Place?.Type.ToString() ?? "",
+                        
+                        Address = i.Place?.Address ?? string.Empty, // <-- ДОДАНО ТУТ
+                        
                         Rating = i.Place?.Rating,
                         StartTime = i.StartTime,
                         EndTime = i.EndTime,
-                        Notes = i.Notes ?? string.Empty
+                        Notes = i.Notes ?? string.Empty,
+                        OrderOffset = i.OrderOffset
                     }).ToList()
                 }).ToList()
             };
@@ -197,7 +201,8 @@ namespace SmartTrip.UI.Controllers
                         Rating = i.Place?.Rating,
                         StartTime = i.StartTime,
                         EndTime = i.EndTime,
-                        Notes = i.Notes ?? string.Empty
+                        Notes = i.Notes ?? string.Empty,
+                        OrderOffset = i.OrderOffset 
                     }).ToList()
                 }).ToList()
             };
@@ -554,6 +559,16 @@ namespace SmartTrip.UI.Controllers
             }
 
             return NotFound();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> OptimizeDayRoute(int dayId, [FromBody] List<int> orderedItemIds)
+        {
+            if (orderedItemIds == null || orderedItemIds.Count == 0)
+                return BadRequest("Невірні дані.");
+
+            await _tripService.UpdateDayItineraryOrderAsync(dayId, orderedItemIds);
+            return Ok();
         }
     }
 }
